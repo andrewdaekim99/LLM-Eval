@@ -17,7 +17,7 @@
     "typecheck": "tsc -b && pnpm --filter @yardstick/dashboard typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
-    "yardstick": "pnpm --filter @yardstick/cli exec yardstick",
+    "yardstick": "node --import=tsx --conditions=development --env-file-if-exists=.env packages/cli/src/index.ts",
     "check": "bash scripts/check.sh"
   },
   "devDependencies": {
@@ -29,6 +29,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "zod": "^3.24.1"
   }
 }

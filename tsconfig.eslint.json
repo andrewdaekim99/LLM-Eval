@@ -13,6 +13,7 @@
     "packages/*/bin/**/*.mjs",
     "apps/*/**/*.ts",
     "apps/*/**/*.tsx",
+    "suites/**/*.ts",
     "eslint.config.mjs",
     "vitest.config.ts"
   ],

@@ -18,6 +18,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "customConditions": ["development"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
