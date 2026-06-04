@@ -1,8 +1,9 @@
 // Yardstick CLI entry point.
-// Phase 0: --version and --help only. Subcommands (run, report, ci) land in later phases.
 
 import { Command } from "commander";
 import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+import { runCommand, type RunCommandOptions } from "./commands/run.js";
 
 interface PackageJson {
   readonly version: string;
@@ -20,13 +21,18 @@ export function buildProgram(): Command {
 
   program
     .command("run")
-    .description("run an eval suite (Phase 1 — not yet implemented)")
-    .argument("[suite]", "path to a suite file")
-    .action((suite: string | undefined) => {
-      process.stderr.write(
-        `\`yardstick run\` ships in Phase 1.${suite ? ` (requested: ${suite})` : ""}\n`,
-      );
-      process.exit(2);
+    .description("run an eval suite against the configured model")
+    .argument("<suite>", "path to a suite file (.ts or .js)")
+    .option("--no-cache", "bypass the response cache (default: cache enabled)")
+    .option("-o, --output <dir>", "directory for run artifacts", "runs")
+    .option("-v, --verbose", "verbose logging", false)
+    .option("-n, --samples <n>", "override samples-per-case (integer)", (v) => parseInt(v, 10))
+    .action((suite: string, opts: RunCommandOptions) => {
+      runCommand(suite, opts).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`yardstick run failed: ${msg}\n`);
+        process.exit(2);
+      });
     });
 
   program
@@ -51,3 +57,17 @@ export function buildProgram(): Command {
 export function main(argv: readonly string[] = process.argv): void {
   buildProgram().parse([...argv]);
 }
+
+// Auto-invoke when this file is the entry point (direct `node src/index.ts` or via tsx).
+// Does NOT fire when imported from elsewhere (e.g. the compiled bin script).
+function isEntryPoint(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return import.meta.url === pathToFileURL(entry).href;
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) main();
