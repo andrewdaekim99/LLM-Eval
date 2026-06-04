@@ -6,6 +6,7 @@ import {
   ARTIFACT_SCHEMA_VERSION,
   RunArtifactSchema,
   artifactPath,
+  migrateArtifact,
   persistArtifact,
   toArtifact,
 } from "../src/artifact.js";
@@ -22,6 +23,8 @@ function makeRun(overrides: Partial<RunResult> = {}): RunResult {
     cases: [
       {
         caseId: "case-a",
+        input: { text: "raw input" },
+        expectation: { name: "Jane" },
         passed: true,
         aggregateScores: [{ scorer: "exactMatch", value: 1, passed: true }],
         samples: [
@@ -76,13 +79,15 @@ describe("artifactPath", () => {
 });
 
 describe("toArtifact / schema", () => {
-  it("round-trips through the artifact schema", () => {
+  it("round-trips through the artifact schema with input + expectation", () => {
     const artifact = toArtifact(makeRun());
     const parsed = RunArtifactSchema.safeParse(artifact);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
       expect(parsed.data.schemaVersion).toBe(ARTIFACT_SCHEMA_VERSION);
       expect(parsed.data.cases).toHaveLength(1);
+      expect(parsed.data.cases[0]?.input).toEqual({ text: "raw input" });
+      expect(parsed.data.cases[0]?.expectation).toEqual({ name: "Jane" });
     }
   });
 
@@ -91,6 +96,8 @@ describe("toArtifact / schema", () => {
       cases: [
         {
           caseId: "case-a",
+          input: "some input",
+          expectation: { ok: true },
           passed: false,
           aggregateScores: [
             { scorer: "fieldAccuracy", value: 0.5, passed: false, reason: "1/2 fields" },
@@ -124,6 +131,78 @@ describe("toArtifact / schema", () => {
   });
 });
 
+describe("migrateArtifact", () => {
+  it("returns v2 artifacts unchanged", () => {
+    const artifact = toArtifact(makeRun());
+    const migrated = migrateArtifact(JSON.parse(JSON.stringify(artifact)));
+    expect(migrated.schemaVersion).toBe(ARTIFACT_SCHEMA_VERSION);
+    expect(migrated.cases[0]?.input).toEqual({ text: "raw input" });
+  });
+
+  it("upgrades a v1 artifact to v2 with null input + expectation", () => {
+    const v1 = {
+      schemaVersion: 1,
+      runId: "11111111-1111-1111-1111-111111111111",
+      suite: "extraction",
+      promptVersion: "v1",
+      model: "claude-haiku-4-5",
+      startedAt: "2026-06-04T16:48:22.000Z",
+      finishedAt: "2026-06-04T16:48:25.000Z",
+      cases: [
+        {
+          caseId: "addr-simple",
+          passed: true,
+          aggregateScores: [{ scorer: "jsonSchema", value: 1, passed: true }],
+          samples: [
+            {
+              output: '{"name":"John"}',
+              scores: [{ scorer: "jsonSchema", value: 1, passed: true }],
+              inputTokens: 50,
+              outputTokens: 20,
+              costUSD: 0.00015,
+              latencyMs: 400,
+              cacheHit: false,
+              stopReason: "end_turn",
+            },
+          ],
+        },
+      ],
+      summary: {
+        totalCases: 1,
+        passedCases: 1,
+        passRate: 1,
+        totalCostUSD: 0.00015,
+        totalInputTokens: 50,
+        totalOutputTokens: 20,
+        latencyMsP50: 400,
+        latencyMsP95: 400,
+        cacheHitRate: 0,
+      },
+    };
+
+    const migrated = migrateArtifact(v1);
+    expect(migrated.schemaVersion).toBe(2);
+    expect(migrated.cases[0]?.caseId).toBe("addr-simple");
+    expect(migrated.cases[0]?.input).toBeNull();
+    expect(migrated.cases[0]?.expectation).toBeNull();
+    expect(migrated.cases[0]?.passed).toBe(true);
+    expect(migrated.summary.passRate).toBe(1);
+  });
+
+  it("rejects artifacts with no schemaVersion", () => {
+    expect(() => migrateArtifact({ runId: "x" })).toThrow(/schemaVersion/);
+  });
+
+  it("rejects artifacts with a future schemaVersion", () => {
+    expect(() => migrateArtifact({ schemaVersion: 99 })).toThrow(/unsupported/);
+  });
+
+  it("rejects non-object payloads", () => {
+    expect(() => migrateArtifact("not an artifact")).toThrow();
+    expect(() => migrateArtifact(null)).toThrow();
+  });
+});
+
 describe("persistArtifact", () => {
   let outputDir: string;
 
@@ -141,5 +220,6 @@ describe("persistArtifact", () => {
     const parsed = RunArtifactSchema.parse(JSON.parse(raw));
     expect(parsed.runId).toBe(artifact.runId);
     expect(parsed.cases).toHaveLength(1);
+    expect(parsed.cases[0]?.input).toEqual({ text: "raw input" });
   });
 });

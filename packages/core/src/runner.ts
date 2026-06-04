@@ -15,6 +15,7 @@ import type {
   RunSummary,
   Score,
   Scorer,
+  ScorerContext,
   Suite,
 } from "./types.js";
 
@@ -68,7 +69,14 @@ async function runCase<I, E>(
   const aggregateScores = aggregateAcrossSamples(samples, suite.scorers);
   const passed = aggregateScores.length > 0 && aggregateScores.every((s) => s.passed);
 
-  return { caseId: c.id, samples, aggregateScores, passed };
+  return {
+    caseId: c.id,
+    input: c.input,
+    expectation: c.expectation,
+    samples,
+    aggregateScores,
+    passed,
+  };
 }
 
 async function runSample<I, E>(
@@ -91,8 +99,9 @@ async function runSample<I, E>(
     return failedSample(suite.scorers, err);
   }
 
+  const ctx = { client, logger: log.child({ sampleIndex }) };
   const scores = await Promise.all(
-    suite.scorers.map((scorer) => safeScore(scorer, res.content, c.expectation)),
+    suite.scorers.map((scorer) => safeScore(scorer, res.content, c.expectation, ctx)),
   );
 
   // Price against the requested (pinned) model. Anthropic's response model field carries
@@ -122,9 +131,10 @@ async function safeScore<E>(
   scorer: Scorer<string, E>,
   output: string,
   expectation: E,
+  ctx: ScorerContext,
 ): Promise<Score> {
   try {
-    return await scorer.score(output, expectation);
+    return await scorer.score(output, expectation, ctx);
   } catch (err) {
     return {
       scorer: scorer.name,

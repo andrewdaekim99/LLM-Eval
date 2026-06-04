@@ -1,12 +1,15 @@
 // On-disk artifact format. Runs are immutable (ADR-0008), and every artifact carries a
 // schema version so future migrations can read older runs without guessing.
+//
+// Schema v2 (ADR-0016): each case embeds `input` and `expectation` so artifacts are
+// fully self-describing. v1 artifacts on disk are migrated in-memory via `migrateArtifact`.
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { z } from "zod";
 import type { RunResult } from "./types.js";
 
-export const ARTIFACT_SCHEMA_VERSION = 1 as const;
+export const ARTIFACT_SCHEMA_VERSION = 2 as const;
 
 const ScoreSchema = z.object({
   scorer: z.string(),
@@ -29,6 +32,8 @@ const CaseSampleSchema = z.object({
 
 const CaseResultSchema = z.object({
   caseId: z.string(),
+  input: z.unknown(),
+  expectation: z.unknown(),
   samples: z.array(CaseSampleSchema),
   aggregateScores: z.array(ScoreSchema),
   passed: z.boolean(),
@@ -60,6 +65,26 @@ export const RunArtifactSchema = z.object({
 
 export type RunArtifact = z.infer<typeof RunArtifactSchema>;
 
+/** The v1 case shape — same as v2 minus input/expectation. */
+const V1CaseResultSchema = z.object({
+  caseId: z.string(),
+  samples: z.array(CaseSampleSchema),
+  aggregateScores: z.array(ScoreSchema),
+  passed: z.boolean(),
+});
+
+const V1ArtifactSchema = z.object({
+  schemaVersion: z.literal(1),
+  runId: z.string(),
+  suite: z.string(),
+  promptVersion: z.string(),
+  model: z.string(),
+  startedAt: z.string(),
+  finishedAt: z.string(),
+  cases: z.array(V1CaseResultSchema),
+  summary: RunSummarySchema,
+});
+
 /** Convert a `RunResult` to its on-disk `RunArtifact` form. */
 export function toArtifact(run: RunResult): RunArtifact {
   return {
@@ -72,6 +97,8 @@ export function toArtifact(run: RunResult): RunArtifact {
     finishedAt: run.finishedAt,
     cases: run.cases.map((c) => ({
       caseId: c.caseId,
+      input: c.input,
+      expectation: c.expectation,
       passed: c.passed,
       aggregateScores: c.aggregateScores.map(toPlainScore),
       samples: c.samples.map((s) => ({
@@ -103,6 +130,49 @@ function toPlainScore(s: {
     ...(s.reason !== undefined && { reason: s.reason }),
     ...(s.detail !== undefined && { detail: s.detail }),
   };
+}
+
+/**
+ * Parse an artifact JSON value, automatically upgrading older schema versions to the
+ * current shape. Use this anywhere you read artifacts (DB rebuild, dashboard, diff).
+ *
+ * Throws a clear error on unknown schema versions rather than silently dropping data.
+ */
+export function migrateArtifact(raw: unknown): RunArtifact {
+  if (typeof raw !== "object" || raw === null || !("schemaVersion" in raw)) {
+    throw new Error("not a yardstick artifact (missing schemaVersion)");
+  }
+  const version = (raw as Record<string, unknown>).schemaVersion;
+
+  if (version === ARTIFACT_SCHEMA_VERSION) {
+    return RunArtifactSchema.parse(raw);
+  }
+
+  if (version === 1) {
+    const v1 = V1ArtifactSchema.parse(raw);
+    // v1 didn't track input/expectation — there's no way to recover them after the fact,
+    // so we store `null` placeholders. The dashboard will show "(input not captured)".
+    const upgraded: RunArtifact = {
+      ...v1,
+      schemaVersion: ARTIFACT_SCHEMA_VERSION,
+      cases: v1.cases.map((c) => ({
+        ...c,
+        input: null,
+        expectation: null,
+      })),
+    };
+    return RunArtifactSchema.parse(upgraded);
+  }
+
+  throw new Error(
+    `unsupported artifact schemaVersion: ${String(version)} (this binary supports v1 and v${ARTIFACT_SCHEMA_VERSION})`,
+  );
+}
+
+/** Read an artifact from disk and migrate to the current schema. */
+export async function readArtifact(path: string): Promise<RunArtifact> {
+  const raw = await readFile(path, "utf8");
+  return migrateArtifact(JSON.parse(raw));
 }
 
 /**

@@ -4,6 +4,7 @@
 // Naming follows PROJECT_DIRECTION.md: Suite, Case, Scorer, Score, RunResult, JudgeVerdict.
 
 import type { z } from "zod";
+import type { Logger } from "./logger.js";
 
 /** A pinned Claude model snapshot ID. Aliases are rejected at config-load (ADR-0005). */
 export type ModelId = string;
@@ -62,10 +63,21 @@ export interface Score {
   readonly detail?: unknown;
 }
 
+/**
+ * Context passed by the runner to every `score()` call. Pure scorers ignore it;
+ * `llmJudge` reads `client` to make a Claude call without coupling suite files to
+ * client construction.
+ */
+export interface ScorerContext {
+  readonly client?: ModelClient;
+  /** A child logger scoped to (run, suite, case, sample). */
+  readonly logger?: Logger;
+}
+
 /** A pure-function scorer (ADR-0006). `llmJudge` is the documented exception. */
 export interface Scorer<TOutput = string, TExpectation = unknown> {
   readonly name: string;
-  score(output: TOutput, expectation: TExpectation): Score | Promise<Score>;
+  score(output: TOutput, expectation: TExpectation, ctx?: ScorerContext): Score | Promise<Score>;
 }
 
 /** The structured verdict returned by `llmJudge`. */
@@ -117,6 +129,10 @@ export interface SuiteThresholds {
 /** The result of running a single case (one or many samples). */
 export interface CaseResult {
   readonly caseId: string;
+  /** The case input as written in the suite. Embedded so artifacts self-describe (ADR-0016). */
+  readonly input: unknown;
+  /** The case expectation as written in the suite. Embedded with input (ADR-0016). */
+  readonly expectation: unknown;
   readonly samples: readonly CaseSample[];
   readonly aggregateScores: readonly Score[];
   readonly passed: boolean;

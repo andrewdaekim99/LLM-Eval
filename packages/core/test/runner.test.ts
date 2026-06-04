@@ -164,4 +164,20 @@ describe("runSuite", () => {
     expect(result.model).toBe("claude-haiku-4-5");
     expect(result.runId).toMatch(/^[0-9a-f-]{36}$/);
   });
+
+  it("embeds input and expectation on every CaseResult (ADR-0016)", async () => {
+    const suite = makeSuite([
+      ["a", "ping-a", "ping-a"],
+      ["b", "ping-b", "ping-b"],
+    ]);
+    const client = new FakeClient({
+      outputByInput: { "ping-a": "ping-a", "ping-b": "ping-b" },
+    });
+
+    const result = await runSuite(suite, { client });
+    expect(result.cases[0]?.input).toBe("ping-a");
+    expect(result.cases[0]?.expectation).toBe("ping-a");
+    expect(result.cases[1]?.input).toBe("ping-b");
+    expect(result.cases[1]?.expectation).toBe("ping-b");
+  });
 });
