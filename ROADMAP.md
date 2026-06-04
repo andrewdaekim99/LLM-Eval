@@ -119,14 +119,17 @@ tests. The artifact format is documented.
 - [x] Commit phase as `feat(core): runnable core with deterministic scorers`.
 
 ### Your tasks
-- [ ] Run `pnpm yardstick run suites/extraction.ts` against the real API once and confirm
+- [x] Run `pnpm yardstick run suites/extraction.ts` against the real API once and confirm
       the cost is reasonable (should be cents).
-- [ ] Skim the JSON artifact and sanity-check the shape — flag anything that feels awkward to
+      *(8/8 pass; $0.0045 for the first run; cache makes reruns free.)*
+- [x] Skim the JSON artifact and sanity-check the shape — flag anything that feels awkward to
       query before we add SQLite on top of it next phase.
-- [ ] Open the resulting `runs/*.json` in the editor; tell me if the field ordering or
+      *(Flagged: artifact omits `input` and `expectation` → ADR-0016, scheduled top of Phase 2.)*
+- [x] Open the resulting `runs/*.json` in the editor; tell me if the field ordering or
       nesting bugs you (now's the cheap time to change it).
-- [ ] Review the extraction suite's example cases — are they representative enough? If you
+- [x] Review the extraction suite's example cases — are they representative enough? If you
       want different domain examples (e.g., from real Patchbay data), point me at them.
+      *(Accepted as-is; Haiku 4.5 got 8/8 on first run.)*
 
 ---
 
