@@ -4,7 +4,7 @@
 
 import { randomUUID } from "node:crypto";
 import { childLogger, type Logger } from "./logger.js";
-import { costOf } from "./pricing.js";
+import { costOf, hasPricing } from "./pricing.js";
 import type {
   Case,
   CaseResult,
@@ -95,6 +95,13 @@ async function runSample<I, E>(
     suite.scorers.map((scorer) => safeScore(scorer, res.content, c.expectation)),
   );
 
+  // Price against the requested (pinned) model. Anthropic's response model field carries
+  // the snapshot date (e.g. `claude-haiku-4-5-20251001`) which won't match the pricing
+  // table; the suite's pinned ID is the canonical key.
+  if (!hasPricing(params.model)) {
+    log.warn({ model: params.model }, "no pricing entry for model — cost will be 0");
+  }
+
   return {
     output: res.content,
     scores,
@@ -103,7 +110,7 @@ async function runSample<I, E>(
     costUSD: costOf({
       inputTokens: res.inputTokens,
       outputTokens: res.outputTokens,
-      model: res.model,
+      model: params.model,
     }),
     latencyMs: res.latencyMs,
     cacheHit: res.cacheHit,
