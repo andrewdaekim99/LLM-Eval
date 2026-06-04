@@ -92,6 +92,12 @@ export function llmJudge<E = unknown>(opts: LlmJudgeOptions): Scorer<string, E> 
         const verdict = await runOneJudge(ctx.client, req);
         if (verdict.ok) {
           samples.push(verdict.value);
+          // Report judge token usage so the runner can include it in the sample's costUSD.
+          ctx.recordSideCost?.({
+            model: judgeModel,
+            inputTokens: verdict.inputTokens,
+            outputTokens: verdict.outputTokens,
+          });
         } else {
           errors.push(verdict.error);
         }
@@ -182,11 +188,18 @@ export function aggregateVerdicts(samples: readonly VerdictPayload[]): Aggregate
 async function runOneJudge(
   client: ModelClient,
   req: GenerateRequest,
-): Promise<{ ok: true; value: VerdictPayload } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; value: VerdictPayload; inputTokens: number; outputTokens: number }
+  | { ok: false; error: string }
+> {
   let raw: string;
+  let inputTokens = 0;
+  let outputTokens = 0;
   try {
     const res = await client.generate(req);
     raw = res.content;
+    inputTokens = res.inputTokens;
+    outputTokens = res.outputTokens;
   } catch (err) {
     return { ok: false, error: `judge call failed: ${(err as Error).message}` };
   }
@@ -211,7 +224,7 @@ async function runOneJudge(
     };
   }
 
-  return { ok: true, value: result.data };
+  return { ok: true, value: result.data, inputTokens, outputTokens };
 }
 
 function round(n: number): number {

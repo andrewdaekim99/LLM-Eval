@@ -72,6 +72,19 @@ export interface ScorerContext {
   readonly client?: ModelClient;
   /** A child logger scoped to (run, suite, case, sample). */
   readonly logger?: Logger;
+  /**
+   * Optional callback for scorers that make their own model calls (`llmJudge`) to
+   * report token usage. The runner accumulates these into the sample's cost so the
+   * displayed total reflects judge spend, not just SUT spend.
+   */
+  readonly recordSideCost?: (entry: SideCostEntry) => void;
+}
+
+/** Tokens used by a scorer-internal model call (e.g. `llmJudge`). */
+export interface SideCostEntry {
+  readonly model: ModelId;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
 }
 
 /** A pure-function scorer (ADR-0006). `llmJudge` is the documented exception. */

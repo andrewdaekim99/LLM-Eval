@@ -16,6 +16,7 @@ import type {
   Score,
   Scorer,
   ScorerContext,
+  SideCostEntry,
   Suite,
 } from "./types.js";
 
@@ -99,7 +100,12 @@ async function runSample<I, E>(
     return failedSample(suite.scorers, err);
   }
 
-  const ctx = { client, logger: log.child({ sampleIndex }) };
+  const sideCosts: SideCostEntry[] = [];
+  const ctx: ScorerContext = {
+    client,
+    logger: log.child({ sampleIndex }),
+    recordSideCost: (entry) => sideCosts.push(entry),
+  };
   const scores = await Promise.all(
     suite.scorers.map((scorer) => safeScore(scorer, res.content, c.expectation, ctx)),
   );
@@ -111,20 +117,31 @@ async function runSample<I, E>(
     log.warn({ model: params.model }, "no pricing entry for model — cost will be 0");
   }
 
+  const sutCost = costOf({
+    inputTokens: res.inputTokens,
+    outputTokens: res.outputTokens,
+    model: params.model,
+  });
+  const sideCostUSD = sideCosts.reduce(
+    (acc, e) =>
+      acc + costOf({ inputTokens: e.inputTokens, outputTokens: e.outputTokens, model: e.model }),
+    0,
+  );
+
   return {
     output: res.content,
     scores,
     inputTokens: res.inputTokens,
     outputTokens: res.outputTokens,
-    costUSD: costOf({
-      inputTokens: res.inputTokens,
-      outputTokens: res.outputTokens,
-      model: params.model,
-    }),
+    costUSD: round6(sutCost + sideCostUSD),
     latencyMs: res.latencyMs,
     cacheHit: res.cacheHit,
     stopReason: res.stopReason,
   };
+}
+
+function round6(n: number): number {
+  return Math.round(n * 1_000_000) / 1_000_000;
 }
 
 async function safeScore<E>(

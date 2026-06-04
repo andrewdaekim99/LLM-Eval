@@ -1,5 +1,5 @@
 export * from "./types.js";
-export type { ScorerContext } from "./types.js";
+export type { ScorerContext, SideCostEntry } from "./types.js";
 export { loadConfig, type YardstickConfig } from "./config.js";
 export { CachedModelClient, AnthropicTransport, cacheKey } from "./client.js";
 export { costOf, hasPricing, type PricingEntry, type CostInputs } from "./pricing.js";
