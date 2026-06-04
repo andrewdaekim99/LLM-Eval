@@ -1,0 +1,38 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# build output
+dist
+.next
+out
+*.tsbuildinfo
+
+# test/coverage
+coverage
+.vitest
+
+# yardstick runtime
+.cache
+runs
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# secrets / env
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os / editor
+.DS_Store
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

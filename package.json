@@ -1,0 +1,34 @@
+{
+  "name": "yardstick",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Claude-native LLM evaluation & observability harness",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "pnpm --filter @yardstick/dashboard dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b && pnpm --filter @yardstick/dashboard typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "yardstick": "pnpm --filter @yardstick/cli exec yardstick",
+    "check": "bash scripts/check.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2",
+    "vitest": "^2.1.8"
+  }
+}
