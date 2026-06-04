@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import {
   AnthropicTransport,
   CachedModelClient,
+  HistoryDb,
   loadConfig,
   persistArtifact,
   runSuite,
@@ -38,7 +39,16 @@ export async function runCommand(suitePath: string, opts: RunCommandOptions): Pr
 
   const result = await runSuite(suite, runOpts);
   const outputDir = resolve(process.cwd(), opts.output);
-  const { path } = await persistArtifact(result, outputDir);
+  const { path, artifact } = await persistArtifact(result, outputDir);
+
+  // Index into SQLite history (rebuildable any time via `yardstick rebuild-db`).
+  const dbPath = resolve(process.cwd(), cfg.DATABASE_URL);
+  const db = new HistoryDb({ path: dbPath });
+  try {
+    db.insertRun(artifact, path);
+  } finally {
+    db.close();
+  }
 
   const colors = process.stdout.isTTY === true;
   process.stdout.write(`${formatRunSummary(result, path, colors)}\n`);

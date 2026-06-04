@@ -4,6 +4,9 @@ import { Command } from "commander";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { runCommand, type RunCommandOptions } from "./commands/run.js";
+import { rebuildDbCommand, type RebuildDbOptions } from "./commands/rebuildDb.js";
+import { historyCommand, type HistoryCommandOptions } from "./commands/history.js";
+import { diffCommand } from "./commands/diff.js";
 
 interface PackageJson {
   readonly version: string;
@@ -36,11 +39,46 @@ export function buildProgram(): Command {
     });
 
   program
-    .command("report")
-    .description("print a run summary / diff (Phase 2 — not yet implemented)")
-    .action(() => {
-      process.stderr.write("`yardstick report` ships in Phase 2.\n");
-      process.exit(2);
+    .command("rebuild-db")
+    .description("rebuild the SQLite history from JSON artifacts on disk (idempotent)")
+    .option("--runs <dir>", "directory containing run artifacts", "runs")
+    .option("-v, --verbose", "verbose logging", false)
+    .action((opts: RebuildDbOptions) => {
+      rebuildDbCommand(opts).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`yardstick rebuild-db failed: ${msg}\n`);
+        process.exit(2);
+      });
+    });
+
+  program
+    .command("history")
+    .description("list past runs from the SQLite history")
+    .option("-s, --suite <name>", "filter by suite")
+    .option("-n, --limit <n>", "max rows", (v) => parseInt(v, 10), 20)
+    .action((opts: HistoryCommandOptions) => {
+      try {
+        historyCommand(opts);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`yardstick history failed: ${msg}\n`);
+        process.exit(2);
+      }
+    });
+
+  program
+    .command("diff")
+    .description("diff two runs by run-id prefix (>=4 chars)")
+    .argument("<runA>", "earlier run id prefix")
+    .argument("<runB>", "later run id prefix")
+    .action((runA: string, runB: string) => {
+      try {
+        diffCommand({ runA, runB });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`yardstick diff failed: ${msg}\n`);
+        process.exit(2);
+      }
     });
 
   program
@@ -48,6 +86,17 @@ export function buildProgram(): Command {
     .description("run suites and apply the regression gate (Phase 3 — not yet implemented)")
     .action(() => {
       process.stderr.write("`yardstick ci` ships in Phase 3.\n");
+      process.exit(2);
+    });
+
+  // Legacy stub: `report` is the umbrella users may type; route them to the new commands.
+  program
+    .command("report")
+    .description("(removed) use `yardstick history` or `yardstick diff` instead")
+    .action(() => {
+      process.stderr.write(
+        "`yardstick report` was split into `yardstick history` and `yardstick diff`.\n",
+      );
       process.exit(2);
     });
 
