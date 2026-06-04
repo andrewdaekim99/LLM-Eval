@@ -72,11 +72,14 @@ commits.
 - [x] Install Node.js 20+ and pnpm 9+ locally if not already installed.
       *(Verified: Node v22.22.2, pnpm 9.15.0.)*
 - [x] `git init` the repo (or tell me to do it). *(done by Claude on `main`.)*
-- [ ] Create the GitHub repo and add `git remote add origin ...`.
+- [x] Create the GitHub repo and add `git remote add origin ...`.
+      *(github.com/andrewdaekim99/LLM-Eval)*
 - [ ] Add your `ANTHROPIC_API_KEY` to a local `.env` (never commit).
+      *(Not blocking until Phase 1.)*
 - [ ] Run `pnpm install && pnpm test` on a fresh clone to confirm bootstrap works.
       *(Already passing locally; redo on a fresh clone if you want belt-and-braces.)*
-- [ ] Push the first commit so future PRs have a base branch.
+- [x] Push the first commit so future PRs have a base branch.
+      *(`main` pushed and tracking `origin/main`.)*
 
 ---
 
