@@ -74,10 +74,10 @@ commits.
 - [x] `git init` the repo (or tell me to do it). *(done by Claude on `main`.)*
 - [x] Create the GitHub repo and add `git remote add origin ...`.
       *(github.com/andrewdaekim99/LLM-Eval)*
-- [ ] Add your `ANTHROPIC_API_KEY` to a local `.env` (never commit).
-      *(Not blocking until Phase 1.)*
-- [ ] Run `pnpm install && pnpm test` on a fresh clone to confirm bootstrap works.
-      *(Already passing locally; redo on a fresh clone if you want belt-and-braces.)*
+- [x] Add your `ANTHROPIC_API_KEY` to a local `.env` (never commit).
+- [x] Run `pnpm install && pnpm test` on a fresh clone to confirm bootstrap works.
+      *(Smoke-tested via `git clone` into a temp dir → `pnpm install` (2.3s) → `pnpm check`:
+      typecheck, lint, 25 tests, format check all green. Temp dir cleaned up.)*
 - [x] Push the first commit so future PRs have a base branch.
       *(`main` pushed and tracking `origin/main`.)*
 
