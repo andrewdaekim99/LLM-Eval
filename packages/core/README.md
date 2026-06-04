@@ -24,8 +24,8 @@ interface level (only the Claude adapter ships — see `DECISIONS.md` ADR-0001).
 
 ### Scorers
 
-Pure `(output, expectation) -> Score` (ADR-0006). `llmJudge` (Phase 2) is the documented
-exception that hits the network — via the same cached client.
+Pure `(output, expectation, ctx?) -> Score` (ADR-0006). `llmJudge` is the documented
+exception that hits the network — via the same cached client, through `ctx.client`.
 
 - `exactMatch({ trim?, caseInsensitive? })` — string equality.
 - `contains({ caseInsensitive? })` — substring match; expectation = needle.
@@ -34,6 +34,16 @@ exception that hits the network — via the same cached client.
   ` ```json ` fenced output and prose surrounding the JSON block.
 - `fieldAccuracy({ schema?, trimStrings?, caseInsensitive?, ignore?, passThreshold? })` —
   per-field equality with partial credit; expectation = the expected object.
+- `llmJudge({ rubric, judgeModel?, judgeSamples?, passThreshold? })` — rubric-driven judge
+  with structured JSON verdict. Defaults to `claude-sonnet-4-6` (different family from the
+  haiku SUT default → anti-self-preference, ADR-0007). When `judgeSamples > 1`, makes N
+  calls with a per-call cache-bookkeeping marker, then aggregates by mean score, mode
+  verdict, median-closest reason, and reports variance in `detail.variance`.
+
+### Judge prompt template
+
+`src/judge/prompts.ts` exposes `JUDGE_SYSTEM_PROMPT` and `buildJudgeMessages()`. Kept in a
+reviewable file so the prompt is diffable and explicitly part of the public surface.
 
 ### Runner
 
@@ -93,6 +103,26 @@ Every run produces a single JSON file in `runs/` (overridable via `--output`). S
 
 Artifacts are **immutable** (ADR-0008). A rerun produces a new file; the SQLite history
 (Phase 2) is rebuildable from these artifacts and is just an index over them.
+
+### History DB
+
+`HistoryDb` wraps `better-sqlite3` with prepared statements and a transactional
+`insertRun`. Schema is idempotent at open (`CREATE TABLE IF NOT EXISTS`); the DB is a
+rebuildable index over the JSON artifacts on disk.
+
+Tables: `runs` (one per run, summary denormalized), `cases` (one per `run × case` with
+input/expectation/aggregate scores), `samples` (one per `run × case × sample` with output +
+cost + latency), `judge_verdicts` (one per llmJudge invocation, for verdict-axis queries).
+
+API: `insertRun(artifact, path?)`, `listRuns({ suite?, limit? })`, `getRunSummary(runId)`,
+`getCases(runId)`, `resolveRunIdPrefix(prefix)`, `countRuns()`, `deleteRun(runId)`,
+`close()`.
+
+### Diff
+
+`diffCases(a, b)` returns `CaseDiff[]` with kinds `regressed | fixed | still-passing |
+still-failing | new | removed`. Pure function; format-free so the CLI, dashboard, and
+CI gate consume the same shape.
 
 ### Logger
 

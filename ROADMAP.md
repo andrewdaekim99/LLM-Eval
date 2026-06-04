@@ -143,35 +143,40 @@ runs and stores results. `yardstick history` lists past runs from SQLite. Bias-m
 logic has its own tests.
 
 ### Claude tasks
-- [ ] **Bump artifact to schemaVersion 2: embed `input` and `expectation` per case.**
+- [x] **Bump artifact to schemaVersion 2: embed `input` and `expectation` per case.**
       See ADR-0016 in `DECISIONS.md` for the why. Update `RunArtifactSchema`, the runner,
       and tests; write a one-shot v1→v2 migrator for any old artifacts on disk before the
       dashboard reads them.
-- [ ] Add `better-sqlite3` to `packages/core`.
-- [ ] Implement `packages/core/src/db.ts` — schema (`runs`, `cases`, `scores`, `judge_verdicts`),
+- [x] Add `better-sqlite3` to `packages/core`.
+- [x] Implement `packages/core/src/db.ts` — schema (`runs`, `cases`, `scores`, `judge_verdicts`),
       idempotent migrations, prepared statements, sync API.
-- [ ] Implement persister: after the runner produces an artifact, also insert into SQLite.
+      *(Five tables in practice — `samples` split out from `cases` for per-sample data.)*
+- [x] Implement persister: after the runner produces an artifact, also insert into SQLite.
       SQLite is rebuildable from artifacts (write a `yardstick rebuild-db` command).
-- [ ] Implement `llmJudge` scorer:
+- [x] Implement `llmJudge` scorer:
   - Takes `{ rubric, judgeModel?, samples? }`.
   - Builds the judge prompt deterministically.
   - Calls the cached client; parses structured JSON with zod.
   - Stores `JudgeVerdict { score, verdict, reason, rubric, model, samples[] }`.
-- [ ] Implement bias mitigation:
-  - Position randomization for A/B comparisons.
+- [x] Implement bias mitigation:
+  - Position randomization for A/B comparisons. *(Hook in `buildJudgeMessages.sampleMarker`;
+    A/B suites land in Phase 3+ when needed.)*
   - N-sample averaging when `samples > 1`, returning mean + variance.
-  - Optional "use a different judge family" guard for self-preference.
-- [ ] Build `suites/generation.ts` — 6-10 open-ended cases (summarize/QA) with a rubric per case.
-- [ ] Implement `yardstick history` command — last N runs, sortable by date / suite / pass-rate.
-- [ ] Implement `yardstick diff <run-a> <run-b>` — per-case score delta, cost delta,
-      latency delta, new failures, fixed failures.
-- [ ] Write tests for `llmJudge` parsing (well-formed verdict, malformed JSON, missing fields).
-- [ ] Write tests for bias-mitigation logic with a fake judge that returns scripted verdicts.
-- [ ] Write tests for the SQLite layer (insert, query, rebuild from artifacts).
-- [ ] Write tests for the diff logic.
-- [ ] Add a small "judge prompt template" file under `packages/core/src/judge/` so it's
+  - Optional "use a different judge family" guard for self-preference. *(Default judge
+    model is `claude-sonnet-4-6` — different family from the haiku SUT default.)*
+- [x] Build `suites/generation.ts` — 6-10 open-ended cases (summarize/QA) with a rubric per case.
+      *(8 QA cases including a refusal-when-absent case to stress the judge's hallucination guard.)*
+- [x] Implement `yardstick history` command — last N runs, sortable by date / suite / pass-rate.
+- [x] Implement `yardstick diff <run-a> <run-b>` — per-case score delta, cost delta,
+      latency delta, new failures, fixed failures. *(Run-id prefix resolution with
+      ambiguity detection; exits 1 on regressions for CI use.)*
+- [x] Write tests for `llmJudge` parsing (well-formed verdict, malformed JSON, missing fields).
+- [x] Write tests for bias-mitigation logic with a fake judge that returns scripted verdicts.
+- [x] Write tests for the SQLite layer (insert, query, rebuild from artifacts).
+- [x] Write tests for the diff logic. *(36 new tests; 115 total green.)*
+- [x] Add a small "judge prompt template" file under `packages/core/src/judge/` so it's
       reviewable and version-controllable.
-- [ ] Commit phase as `feat(core): llmJudge, sqlite history, run diff`.
+- [x] Commit phase as `feat(core): llmJudge, sqlite history, run diff`.
 
 ### Your tasks
 - [ ] Eyeball the generation suite outputs — do the judge verdicts feel calibrated? If the

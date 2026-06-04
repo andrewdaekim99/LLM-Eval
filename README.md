@@ -4,21 +4,32 @@ Claude-native LLM **evaluation & observability harness**: a TypeScript library +
 defining eval suites, scoring outputs with a mix of deterministic + LLM-as-judge scorers,
 caching every model call, and (in later phases) gating CI on regressions.
 
-> **Status:** Phase 1 — runnable core. The CLI scores extraction suites end-to-end.
-> Judge + history (Phase 2), CI gate (Phase 3), and dashboard (Phase 4) ship next.
-> See [`ROADMAP.md`](./ROADMAP.md) and [`PROJECT_DIRECTION.md`](./PROJECT_DIRECTION.md).
+> **Status:** Phase 2 — llmJudge + SQLite history + run diff. CI gate (Phase 3) and
+> dashboard (Phase 4) ship next. See [`ROADMAP.md`](./ROADMAP.md) and
+> [`PROJECT_DIRECTION.md`](./PROJECT_DIRECTION.md).
 
 ## Quickstart
 
 ```bash
 pnpm install
 cp .env.example .env             # drop your ANTHROPIC_API_KEY into .env
+
+# Deterministic extraction suite
 pnpm yardstick run suites/extraction.ts
+
+# Open-ended QA judged by llmJudge against a written rubric
+pnpm yardstick run suites/generation.ts
+
+# Compare two runs
+pnpm yardstick history -n 10
+pnpm yardstick diff <runA-prefix> <runB-prefix>
 ```
 
 You'll see a per-case pass/fail summary plus pass rate, cost, latency p50/p95, and the
-written artifact path. Re-runs are free — responses are cached on disk under
-`./.cache/responses` keyed by `(model, prompt, input, params)`.
+written artifact path. Every run is also indexed into a local SQLite DB at
+`./.cache/yardstick.db` (rebuildable any time via `pnpm yardstick rebuild-db`).
+Re-runs are free — responses are cached on disk under `./.cache/responses` keyed by
+`(model, prompt, input, params)`.
 
 ```
 Yardstick — extraction (v1) — claude-haiku-4-5
