@@ -140,6 +140,10 @@ runs and stores results. `yardstick history` lists past runs from SQLite. Bias-m
 logic has its own tests.
 
 ### Claude tasks
+- [ ] **Bump artifact to schemaVersion 2: embed `input` and `expectation` per case.**
+      See ADR-0016 in `DECISIONS.md` for the why. Update `RunArtifactSchema`, the runner,
+      and tests; write a one-shot v1→v2 migrator for any old artifacts on disk before the
+      dashboard reads them.
 - [ ] Add `better-sqlite3` to `packages/core`.
 - [ ] Implement `packages/core/src/db.ts` — schema (`runs`, `cases`, `scores`, `judge_verdicts`),
       idempotent migrations, prepared statements, sync API.

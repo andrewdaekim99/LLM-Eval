@@ -360,6 +360,47 @@ driver, optional lightweight dashboard deploy (Vercel or single container). No A
 
 ---
 
+## ADR-0016 — Artifact embeds per-case `input` and `expectation` (schema v2)
+
+**Date:** 2026-06-04
+**Status:** Accepted (scheduled for Phase 2 — v1 artifacts on disk get a migrator)
+
+### Context
+The v1 run artifact (Phase 1) records `caseId`, `output`, and `scores` per case but does
+not record the case `input` or `expectation`. The dashboard's "what went wrong on case X?"
+view (Phase 4) would therefore have to cross-reference the suite source file at the matching
+`promptVersion` to render expected-vs-actual. That couples a forever-immutable artifact to
+having the suite source perpetually available and in sync — exactly the kind of dependency
+that turns "show me run #427" into a hunt through git history.
+
+### Decision
+Bump the artifact to **schemaVersion 2** and store `input` and `expectation` on each case
+inline. Each artifact becomes fully self-describing: hand someone the JSON and they can see
+what was tested, what was expected, what came back, and why each scorer scored it that way —
+without needing the suite source. Implementation lands at the start of Phase 2 alongside the
+SQLite history work, since the same schema change is what SQLite is built around.
+
+### Alternatives considered
+- **Leave it out, snapshot the suite source alongside the artifact** (e.g. write
+  `runs/<...>.suite.ts` next to the JSON). Rejected: doubles the file count, makes the
+  artifact-as-PR-comment story messier, and TypeScript suite snapshots aren't readable in
+  the dashboard without execution.
+- **Reference the suite by content hash and store suite definitions in a separate table.**
+  Rejected: solves the same problem at much higher engineering cost; we're at portfolio
+  scale, not multi-tenant SaaS scale.
+- **Defer to Phase 4 dashboard implementation.** Rejected: by then the SQLite schema (Phase 2)
+  would already be designed around v1, and a schema bump would be a bigger change.
+
+### Consequences
+- Artifacts grow ~10-30% in size for typical extraction suites (a few KB → a few KB). Still
+  trivial.
+- A small v1→v2 migrator runs before the SQLite import; old artifacts get a placeholder
+  `input: null, expectation: null` so the schema stays uniform.
+- The artifact is now a complete reproduction of a run, not a pointer into one. Strong
+  property to be able to claim in interviews.
+
+---
+
 ## ADR-0015 — ESLint + Prettier with type-aware rules (over Biome)
 
 **Date:** 2026-06-04
