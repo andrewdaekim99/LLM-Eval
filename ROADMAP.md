@@ -93,29 +93,30 @@ real API once, then is free on reruns. A JSON artifact lands in `runs/`. Every s
 tests. The artifact format is documented.
 
 ### Claude tasks
-- [ ] Implement `packages/core/src/runner.ts` — orchestrates: load suite → for each case,
+- [x] Implement `packages/core/src/runner.ts` — orchestrates: load suite → for each case,
       call client → run scorers → assemble `RunResult`. Captures latency, tokens, cost,
       cache-hit flag, model ID, prompt version hash.
-- [ ] Define `RunArtifact` JSON schema (zod), write it to `runs/<timestamp>-<suite>-<hash>.json`.
-- [ ] Implement scorer: `exactMatch(output, expected)`.
-- [ ] Implement scorer: `regex(output, pattern)`.
-- [ ] Implement scorer: `contains(output, needle)`.
-- [ ] Implement scorer: `jsonSchema(output, schema)` — validates output is parseable JSON
+- [x] Define `RunArtifact` JSON schema (zod), write it to `runs/<timestamp>-<suite>-<hash>.json`.
+- [x] Implement scorer: `exactMatch(output, expected)`.
+- [x] Implement scorer: `regex(output, pattern)`.
+- [x] Implement scorer: `contains(output, needle)`.
+- [x] Implement scorer: `jsonSchema(output, schema)` — validates output is parseable JSON
       conforming to a zod schema.
-- [ ] Implement scorer: `fieldAccuracy(output, expectedObject)` — per-field equality with
+- [x] Implement scorer: `fieldAccuracy(output, expectedObject)` — per-field equality with
       partial-credit aggregation.
-- [ ] Wire up the `yardstick run <suite>` command in `packages/cli/`. Flags: `--no-cache`,
-      `--output <dir>`, `--verbose`.
-- [ ] Build `suites/extraction.ts` — 8-12 cases extracting structured fields from messy free
+- [x] Wire up the `yardstick run <suite>` command in `packages/cli/`. Flags: `--no-cache`,
+      `--output <dir>`, `--verbose`. *(Also added `-n / --samples` for pass@k preview.)*
+- [x] Build `suites/extraction.ts` — 8-12 cases extracting structured fields from messy free
       text (shipping addresses, order lines). Use `jsonSchema` + `fieldAccuracy`.
-- [ ] Pretty-print a one-screen summary on stdout after a run (pass-rate, cost, latency p50/p95).
-- [ ] Write unit tests for every scorer (positive, negative, edge cases like empty strings,
-      non-string outputs, malformed JSON).
-- [ ] Write a runner test using the fake client to assert: cases iterate, scorers run, artifact
-      written, errors per-case don't kill the whole run.
-- [ ] Document the artifact schema in `packages/core/README.md`.
-- [ ] Add a top-level `README.md` with a 20-line quickstart pointing at this phase's command.
-- [ ] Commit phase as `feat(core): runnable core with deterministic scorers`.
+      *(Shipped with 8 address cases.)*
+- [x] Pretty-print a one-screen summary on stdout after a run (pass-rate, cost, latency p50/p95).
+- [x] Write unit tests for every scorer (positive, negative, edge cases like empty strings,
+      non-string outputs, malformed JSON). *(35 scorer tests.)*
+- [x] Write a runner test using the fake client to assert: cases iterate, scorers run, artifact
+      written, errors per-case don't kill the whole run. *(8 runner tests + 4 artifact tests.)*
+- [x] Document the artifact schema in `packages/core/README.md`.
+- [x] Add a top-level `README.md` with a 20-line quickstart pointing at this phase's command.
+- [x] Commit phase as `feat(core): runnable core with deterministic scorers`.
 
 ### Your tasks
 - [ ] Run `pnpm yardstick run suites/extraction.ts` against the real API once and confirm
