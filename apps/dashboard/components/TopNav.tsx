@@ -7,15 +7,17 @@ import { listSuites } from "@/lib/data";
 export function TopNav() {
   const suites = listSuites();
   return (
-    <header className="border-b bg-background">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-3">
         <Link href="/runs" className="flex items-center gap-2">
-          <span className="text-lg font-semibold tracking-tight">Yardstick</span>
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
-            dashboard
+          <span className="text-lg font-semibold tracking-tight text-foreground">
+            Yardstick
+          </span>
+          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
+            eval
           </span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
+        <nav className="flex items-center gap-5 text-sm font-medium">
           <Link
             href="/runs"
             className="text-muted-foreground transition-colors hover:text-foreground"

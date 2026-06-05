@@ -38,7 +38,10 @@ export function Filters({ suites }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3 text-sm">
       <div className="flex items-center gap-2">
-        <label className="text-muted-foreground" htmlFor="suite-filter">
+        <label
+          className="text-xs font-medium text-muted-foreground"
+          htmlFor="suite-filter"
+        >
           Suite
         </label>
         <Select
@@ -65,7 +68,10 @@ export function Filters({ suites }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-muted-foreground" htmlFor="from-filter">
+        <label
+          className="text-xs font-medium text-muted-foreground"
+          htmlFor="from-filter"
+        >
           From
         </label>
         <input
@@ -84,7 +90,10 @@ export function Filters({ suites }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-muted-foreground" htmlFor="to-filter">
+        <label
+          className="text-xs font-medium text-muted-foreground"
+          htmlFor="to-filter"
+        >
           To
         </label>
         <input

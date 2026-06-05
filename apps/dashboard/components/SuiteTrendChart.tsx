@@ -55,28 +55,33 @@ export function SuiteTrendChart({ points }: Props) {
       title: "Pass rate",
       dataKey: "passRatePct",
       format: (v) => `${v.toFixed(0)}%`,
-      stroke: "hsl(142 71% 33%)",
+      stroke: "hsl(142 71% 50%)", // success green
       domain: [0, 100],
     },
     {
       title: "Total cost (USD)",
       dataKey: "costUSD",
       format: (v) => (v < 0.01 ? `$${v.toFixed(4)}` : `$${v.toFixed(3)}`),
-      stroke: "hsl(240 5.9% 10%)",
+      stroke: "hsl(43 96% 60%)", // gold accent
     },
     {
       title: "p95 latency (ms)",
       dataKey: "latencyP95",
       format: (v) => `${Math.round(v)} ms`,
-      stroke: "hsl(217 91% 60%)",
+      stroke: "hsl(199 89% 60%)", // cool blue
     },
   ];
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       {charts.map((c) => (
-        <div key={c.dataKey} className="rounded-xl border bg-card p-4 shadow">
-          <div className="mb-2 text-sm font-medium">{c.title}</div>
+        <div
+          key={c.dataKey}
+          className="rounded-lg border border-border bg-card p-4"
+        >
+          <div className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {c.title}
+          </div>
           <div style={{ width: "100%", height: CHART_HEIGHT }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -90,15 +95,18 @@ export function SuiteTrendChart({ points }: Props) {
                   if (point) router.push(`/runs/${point.runId}`);
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 5.9% 90%)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(219 27% 20%)"
+                />
                 <XAxis
                   dataKey="label"
-                  stroke="hsl(240 3.8% 46.1%)"
+                  stroke="hsl(217 18% 62%)"
                   fontSize={11}
                   tickMargin={6}
                 />
                 <YAxis
-                  stroke="hsl(240 3.8% 46.1%)"
+                  stroke="hsl(217 18% 62%)"
                   fontSize={11}
                   tickFormatter={c.format}
                   domain={c.domain ?? ["auto", "auto"]}
@@ -119,8 +127,8 @@ export function SuiteTrendChart({ points }: Props) {
                   dataKey={c.dataKey}
                   stroke={c.stroke}
                   strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 3, fill: c.stroke, stroke: c.stroke }}
+                  activeDot={{ r: 5, fill: c.stroke, stroke: c.stroke }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -148,10 +156,10 @@ function TrendTooltip({
   const point = raw as TrendPoint & { passRatePct: number };
   const value = point[dataKey];
   return (
-    <div className="rounded-md border bg-popover px-3 py-2 text-xs shadow-md">
-      <div className="font-mono">{point.runId.slice(0, 8)}</div>
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
+      <div className="font-mono text-primary">{point.runId.slice(0, 8)}</div>
       <div className="text-muted-foreground">{formatLabel(point.startedAt)}</div>
-      <div className="mt-1 font-mono">{format(value)}</div>
+      <div className="mt-1 font-mono text-foreground">{format(value)}</div>
     </div>
   );
 }
