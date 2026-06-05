@@ -1,9 +1,17 @@
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   // Emit a self-contained server bundle so the Dockerfile can ship just
   // .next/standalone + .next/static + public.
   output: "standalone",
+  // Trace from the workspace root so standalone picks up the hoisted pnpm
+  // node_modules + @yardstick/core's dist/, not just apps/dashboard.
+  outputFileTracingRoot: resolve(__dirname, "../.."),
   // `better-sqlite3` is a native module — keep it external to the server bundle.
   serverExternalPackages: ["better-sqlite3"],
   // @yardstick/core's package.json declares a `development` exports condition

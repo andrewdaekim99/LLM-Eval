@@ -1,0 +1,22 @@
+# `docker compose up --build` brings up the dashboard at localhost:3000,
+# reading the SQLite index + JSON artifacts produced on the host. The
+# dashboard is read-only; no ANTHROPIC_API_KEY is needed at runtime, but
+# the core's zod schema requires the var to be non-empty so we pass a
+# placeholder (CLAUDE.md golden rule 7).
+
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: /app/.cache/yardstick.db
+      CACHE_DIR: /app/.cache/responses
+      ANTHROPIC_API_KEY: "unused-read-only"
+      LOG_LEVEL: info
+    volumes:
+      - ./runs:/app/runs:ro
+      - ./.cache:/app/.cache:ro
+    restart: unless-stopped
