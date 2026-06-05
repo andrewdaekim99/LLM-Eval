@@ -1,0 +1,75 @@
+name: eval-gate
+
+# Uses `pull_request` (not `pull_request_target`) so that fork PRs do NOT receive
+# the ANTHROPIC_API_KEY secret. This is deliberate — see SECURITY note in the
+# project README. Trade-off: fork PRs won't trigger live evals; reviewers can
+# re-run after merging if needed.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel in-flight runs when a newer commit lands on the same branch.
+concurrency:
+  group: eval-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    name: yardstick eval-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Persist the Yardstick response cache across runs. Key includes the lockfile
+      # hash so cache busts when deps change, and the suites hash so it busts when
+      # any suite (prompt or case) changes. Most PRs that touch unrelated files
+      # restore the cache and pay near-zero API cost.
+      - name: Restore Yardstick response cache
+        id: cache-responses
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: yardstick-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'suites/**/*.ts') }}
+          restore-keys: |
+            yardstick-cache-${{ runner.os }}-
+
+      - name: Run eval-gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOG_LEVEL: warn
+        run: pnpm yardstick ci
+
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yardstick-runs-${{ github.run_id }}
+          path: runs/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Save Yardstick response cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache
+          key: yardstick-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'suites/**/*.ts') }}
