@@ -1,4 +1,4 @@
-import type { RunResult, CaseResult } from "@yardstick/core";
+import { computeConfusionMatrix, type CaseResult, type RunResult } from "@yardstick/core";
 
 const C = {
   reset: "\x1b[0m",
@@ -46,7 +46,33 @@ export function formatRunSummary(run: RunResult, artifactPath: string, colors: b
   lines.push(`Latency:   p50 ${s.latencyMsP50}ms  ·  p95 ${s.latencyMsP95}ms`);
   lines.push(`Cache:     ${(s.cacheHitRate * 100).toFixed(0)}% hit`);
   lines.push(paint(`Artifact:  ${artifactPath}`, C.cyan, colors));
+
+  const matrix = formatConfusionMatrix(run);
+  if (matrix) {
+    lines.push("");
+    lines.push(matrix);
+  }
   return lines.join("\n");
+}
+
+/**
+ * Render a confusion matrix for a classification-shaped run. Matrix data is computed in
+ * core (`computeConfusionMatrix`) so the dashboard can reuse the same shape later.
+ */
+export function formatConfusionMatrix(run: RunResult): string | null {
+  const matrix = computeConfusionMatrix(run);
+  if (!matrix) return null;
+  const labelWidth = Math.max(8, ...matrix.labels.map((l) => l.length));
+  const colWidth = Math.max(3, ...matrix.labels.map((l) => l.length));
+  const header = `${"expected ↓ / actual →".padEnd(labelWidth + 2)}${matrix.labels
+    .map((l) => l.padStart(colWidth))
+    .join("  ")}`;
+  const body = matrix.labels.map((e) => {
+    const row = matrix.counts.get(e);
+    const cells = matrix.labels.map((a) => String(row?.get(a) ?? 0).padStart(colWidth)).join("  ");
+    return `${e.padEnd(labelWidth + 2)}${cells}`;
+  });
+  return ["Confusion matrix:", header, ...body].join("\n");
 }
 
 function formatCaseLine(c: CaseResult, colors: boolean): string {
