@@ -68,7 +68,15 @@ async function runCase<I, E>(
   }
 
   const aggregateScores = aggregateAcrossSamples(samples, suite.scorers);
-  const passed = aggregateScores.length > 0 && aggregateScores.every((s) => s.passed);
+  // pass@k semantics (ADR-0009): a sample fully passes iff every scorer passed on it;
+  // the case passes iff at least `passAtK` of N samples fully passed. Default k=1 means
+  // "any sample passes" — catches catastrophic regressions while tolerating noise. The
+  // suite's threshold can tighten this (e.g., passAtK = sampleCount for strict mode).
+  const samplesPassed = samples.filter(
+    (s) => s.scores.length > 0 && s.scores.every((sc) => sc.passed),
+  ).length;
+  const passAtK = Math.max(1, Math.min(sampleCount, suite.thresholds?.passAtK ?? 1));
+  const passed = samples.length > 0 && samplesPassed >= passAtK;
 
   return {
     caseId: c.id,
@@ -190,14 +198,21 @@ function aggregateAcrossSamples<E>(
     if (matching.length === 0) {
       return { scorer: scorer.name, value: 0, passed: false, reason: "no samples scored" };
     }
-    const mean = matching.reduce((acc, s) => acc + s.value, 0) / matching.length;
+    const values = matching.map((s) => s.value);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
     const passRate = matching.filter((s) => s.passed).length / matching.length;
+    // Per-scorer aggregate `passed` flag is informational: "did this scorer pass on the
+    // majority of samples?" The case-level pass/fail (pass@k) is computed separately in
+    // `runCase` and is the load-bearing signal for the gate.
     const passed = passRate >= 0.5;
     return {
       scorer: scorer.name,
       value: round(mean),
       passed,
-      ...(samples.length > 1 ? { detail: { passRate, samples: matching.length } } : {}),
+      ...(samples.length > 1
+        ? { detail: { passRate, variance: round(variance), samples: matching.length } }
+        : {}),
     };
   });
 }

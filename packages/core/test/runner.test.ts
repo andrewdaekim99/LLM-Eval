@@ -180,4 +180,81 @@ describe("runSuite", () => {
     expect(result.cases[1]?.input).toBe("ping-b");
     expect(result.cases[1]?.expectation).toBe("ping-b");
   });
+
+  it("pass@1 default: case passes if at least one of N samples fully passed", async () => {
+    const suite: Suite<string, string> = {
+      ...makeSuite([["a", "in", "expected"]]),
+      // Suite-level passAtK omitted → defaults to 1.
+    };
+    let i = 0;
+    const flakyClient: ModelClient = {
+      generate: (req: GenerateRequest): Promise<GenerateResponse> => {
+        const content = i === 0 ? "wrong" : "expected";
+        i += 1;
+        return Promise.resolve({
+          content,
+          inputTokens: 1,
+          outputTokens: 1,
+          model: req.params.model,
+          stopReason: "end_turn",
+          cacheHit: false,
+          latencyMs: 1,
+        });
+      },
+    };
+    const result = await runSuite(suite, { client: flakyClient, samplesOverride: 2 });
+    // One sample fails, one passes → pass@1 → case passes
+    expect(result.cases[0]?.passed).toBe(true);
+  });
+
+  it("pass@N strict: case fails if any sample failed", async () => {
+    const suite: Suite<string, string> = {
+      ...makeSuite([["a", "in", "expected"]]),
+      thresholds: { passAtK: 2 }, // strict: all 2 samples must pass
+    };
+    let i = 0;
+    const flakyClient: ModelClient = {
+      generate: (req: GenerateRequest): Promise<GenerateResponse> => {
+        const content = i === 0 ? "wrong" : "expected";
+        i += 1;
+        return Promise.resolve({
+          content,
+          inputTokens: 1,
+          outputTokens: 1,
+          model: req.params.model,
+          stopReason: "end_turn",
+          cacheHit: false,
+          latencyMs: 1,
+        });
+      },
+    };
+    const result = await runSuite(suite, { client: flakyClient, samplesOverride: 2 });
+    // Only 1 of 2 passed → fails passAtK=2
+    expect(result.cases[0]?.passed).toBe(false);
+  });
+
+  it("aggregateScores include variance when samples > 1", async () => {
+    const suite = makeSuite([["a", "in", "expected"]]);
+    let i = 0;
+    const flakyClient: ModelClient = {
+      generate: (req: GenerateRequest): Promise<GenerateResponse> => {
+        const content = i === 0 ? "wrong" : "expected";
+        i += 1;
+        return Promise.resolve({
+          content,
+          inputTokens: 1,
+          outputTokens: 1,
+          model: req.params.model,
+          stopReason: "end_turn",
+          cacheHit: false,
+          latencyMs: 1,
+        });
+      },
+    };
+    const result = await runSuite(suite, { client: flakyClient, samplesOverride: 2 });
+    const agg = result.cases[0]?.aggregateScores[0];
+    expect(agg?.value).toBe(0.5); // mean of 0, 1
+    expect((agg?.detail as { variance: number }).variance).toBe(0.25); // var of [0,1] around 0.5
+    expect((agg?.detail as { samples: number }).samples).toBe(2);
+  });
 });
