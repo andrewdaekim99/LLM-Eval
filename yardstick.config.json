@@ -1,0 +1,3 @@
+{
+  "ciSuites": ["suites/extraction.ts", "suites/classification.ts"]
+}

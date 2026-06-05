@@ -7,6 +7,7 @@ import { runCommand, type RunCommandOptions } from "./commands/run.js";
 import { rebuildDbCommand, type RebuildDbOptions } from "./commands/rebuildDb.js";
 import { historyCommand, type HistoryCommandOptions } from "./commands/history.js";
 import { diffCommand } from "./commands/diff.js";
+import { ciCommand, type CiCommandOptions } from "./commands/ci.js";
 
 interface PackageJson {
   readonly version: string;
@@ -83,10 +84,17 @@ export function buildProgram(): Command {
 
   program
     .command("ci")
-    .description("run suites and apply the regression gate (Phase 3 — not yet implemented)")
-    .action(() => {
-      process.stderr.write("`yardstick ci` ships in Phase 3.\n");
-      process.exit(2);
+    .description("run configured suites, apply the regression gate, exit non-zero on any failure")
+    .option("--config <path>", "path to yardstick.config.json", "yardstick.config.json")
+    .option("-o, --output <dir>", "directory for run artifacts", "runs")
+    .option("--no-cache", "bypass the response cache")
+    .option("-v, --verbose", "verbose logging", false)
+    .action((opts: CiCommandOptions) => {
+      ciCommand(opts).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`yardstick ci failed: ${msg}\n`);
+        process.exit(2);
+      });
     });
 
   // Legacy stub: `report` is the umbrella users may type; route them to the new commands.
