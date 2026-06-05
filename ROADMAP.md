@@ -201,25 +201,28 @@ proves the gate works.
 output makes the regression obvious. Threshold config is repo-checked and reviewable.
 
 ### Claude tasks
-- [ ] Add suite-level threshold config: `{ passRate, passAtK, maxCostUSD, maxLatencyMsP95 }`.
-- [ ] Implement `packages/core/src/gate.ts` — aggregates per-case results, applies thresholds,
+- [x] Add suite-level threshold config: `{ passRate, passAtK, maxCostUSD, maxLatencyMsP95 }`.
+      *(Already in `SuiteThresholds` since Phase 0; wired up by gate.ts in Phase 3.)*
+- [x] Implement `packages/core/src/gate.ts` — aggregates per-case results, applies thresholds,
       returns `{ passed, reasons[] }`.
-- [ ] Implement `yardstick ci` command — runs configured suites, applies gate, exits non-zero
+- [x] Implement `yardstick ci` command — runs configured suites, applies gate, exits non-zero
       on failure, writes a Markdown summary to `$GITHUB_STEP_SUMMARY` when available.
-- [ ] Implement pass@k aggregation (N samples per case, k=1 default).
-- [ ] Implement variance reporting (std dev across samples) in the run summary.
-- [ ] Build `suites/classification.ts` — labeling task with `exactMatch`, plus a confusion
+- [x] Implement pass@k aggregation (N samples per case, k=1 default).
+- [x] Implement variance reporting (std dev across samples) in the run summary.
+      *(In `aggregateScores[].detail` when samples > 1.)*
+- [x] Build `suites/classification.ts` — labeling task with `exactMatch`, plus a confusion
       matrix in the report.
-- [ ] Write `.github/workflows/eval-gate.yml`:
+- [x] Write `.github/workflows/eval-gate.yml`:
   - On PR + push to main.
   - Caches `~/.cache/yardstick` between runs (so reruns are free).
   - Posts the Markdown summary on the PR via `actions/github-script` or job summary.
+        *(Uses `$GITHUB_STEP_SUMMARY` — simpler, no PR comment churn.)*
   - Uploads the run artifact as a workflow artifact.
-- [ ] Write tests for `gate.ts` (every threshold permutation, edge cases like 0 cases, all
+- [x] Write tests for `gate.ts` (every threshold permutation, edge cases like 0 cases, all
       pass, all fail, partial fail).
-- [ ] Write tests for pass@k aggregation.
-- [ ] Document the gate config + threshold tuning advice in `packages/cli/README.md`.
-- [ ] Commit phase as `feat: ci eval-gate with pass@k`.
+- [x] Write tests for pass@k aggregation.
+- [x] Document the gate config + threshold tuning advice in `packages/cli/README.md`.
+- [x] Commit phase as `feat: ci eval-gate with pass@k`.
 
 ### Your tasks
 - [ ] Add `ANTHROPIC_API_KEY` to GitHub repo secrets (Settings → Secrets and variables →
