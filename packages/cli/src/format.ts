@@ -62,9 +62,10 @@ export function formatRunSummary(run: RunResult, artifactPath: string, colors: b
 export function formatConfusionMatrix(run: RunResult): string | null {
   const matrix = computeConfusionMatrix(run);
   if (!matrix) return null;
-  const labelWidth = Math.max(8, ...matrix.labels.map((l) => l.length));
+  const headerText = "expected ↓ \\ actual →";
+  const labelWidth = Math.max(headerText.length, ...matrix.labels.map((l) => l.length));
   const colWidth = Math.max(3, ...matrix.labels.map((l) => l.length));
-  const header = `${"expected ↓ / actual →".padEnd(labelWidth + 2)}${matrix.labels
+  const header = `${headerText.padEnd(labelWidth + 2)}${matrix.labels
     .map((l) => l.padStart(colWidth))
     .join("  ")}`;
   const body = matrix.labels.map((e) => {
