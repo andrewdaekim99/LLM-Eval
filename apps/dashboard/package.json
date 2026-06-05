@@ -5,7 +5,9 @@
   "description": "Yardstick dashboard: run list, trends, prompt-version diff, drill-down.",
   "scripts": {
     "dev": "next dev",
+    "predev": "pnpm --filter @yardstick/core build",
     "build": "next build",
+    "prebuild": "pnpm --filter @yardstick/core build",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

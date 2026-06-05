@@ -1,6 +1,7 @@
 import "server-only";
 
-import { resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, isAbsolute, resolve } from "node:path";
 import {
   diffCases,
   meanScoreValue,
@@ -187,10 +188,26 @@ export { meanScoreValue };
 
 async function safeReadArtifact(path: string): Promise<RunArtifact | null> {
   try {
-    const resolved = resolve(process.cwd(), path);
+    const resolved = resolveArtifactPath(path);
     return await readArtifact(resolved);
   } catch {
     return null;
+  }
+}
+
+function resolveArtifactPath(p: string): string {
+  if (isAbsolute(p)) return p;
+  const root = findWorkspaceRoot(process.cwd()) ?? process.cwd();
+  return resolve(root, p);
+}
+
+function findWorkspaceRoot(start: string): string | null {
+  let dir = start;
+  while (true) {
+    if (existsSync(resolve(dir, "pnpm-workspace.yaml"))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
   }
 }
 
