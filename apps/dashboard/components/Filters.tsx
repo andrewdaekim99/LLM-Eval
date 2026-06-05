@@ -36,10 +36,13 @@ export function Filters({ suites }: Props) {
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 font-mono text-sm">
       <div className="flex items-center gap-2">
-        <label className="text-muted-foreground" htmlFor="suite-filter">
-          Suite
+        <label
+          className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+          htmlFor="suite-filter"
+        >
+          suite
         </label>
         <Select
           value={current}
@@ -65,8 +68,11 @@ export function Filters({ suites }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-muted-foreground" htmlFor="from-filter">
-          From
+        <label
+          className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+          htmlFor="from-filter"
+        >
+          from
         </label>
         <input
           id="from-filter"
@@ -84,8 +90,11 @@ export function Filters({ suites }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="text-muted-foreground" htmlFor="to-filter">
-          To
+        <label
+          className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+          htmlFor="to-filter"
+        >
+          to
         </label>
         <input
           id="to-filter"

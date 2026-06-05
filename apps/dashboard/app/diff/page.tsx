@@ -25,9 +25,9 @@ export default async function DiffPage({ searchParams }: PageProps) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Diff</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Compare two runs side-by-side.
+          <h1 className="cli-prompt font-display text-3xl">diff</h1>
+          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            // compare two runs side-by-side
           </p>
         </div>
         <Card>
@@ -64,9 +64,9 @@ export default async function DiffPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Diff</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {report.a.suite}/{report.a.promptVersion} → {report.b.suite}/
+        <h1 className="cli-prompt font-display text-3xl">diff</h1>
+        <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          // {report.a.suite}/{report.a.promptVersion} → {report.b.suite}/
           {report.b.promptVersion}
         </p>
       </div>
