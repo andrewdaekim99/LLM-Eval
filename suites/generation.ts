@@ -93,12 +93,11 @@ const cases: readonly Case<GenerationInput, GenerationExpectation>[] = [
     id: "gen-negation-handling",
     input: {
       passage:
-        "Photosynthesis requires light, but not all plants photosynthesize the same way. C3 plants close their stomata in hot, dry weather to conserve water, which limits CO2 intake. CAM plants, by contrast, open their stomata at night.",
+        "Photosynthesis requires light, but not all plants regulate gas exchange the same way. C3 plants keep their stomata closed at night and open them during the day to take in CO2. CAM plants do the opposite, opening their stomata at night to limit water loss.",
       question: "Do C3 plants open their stomata at night?",
     },
     expectation: {
-      answer:
-        "No. The passage says C3 plants close their stomata in hot, dry weather; CAM plants are the ones that open at night.",
+      answer: "No. The passage states that C3 plants keep their stomata closed at night.",
     },
   },
   {
@@ -129,7 +128,10 @@ const cases: readonly Case<GenerationInput, GenerationExpectation>[] = [
 
 export const generation: Suite<GenerationInput, GenerationExpectation> = {
   name: "generation",
-  promptVersion: "v1",
+  // v2: rewrote gen-negation-handling so the passage explicitly states C3 stomata behavior
+  // (v1 required inference from a contrast, which was ambiguous against the strict-refusal
+  // system prompt). See the v1↔v2 run diff for impact.
+  promptVersion: "v2",
   params: {
     model: "claude-haiku-4-5",
     maxTokens: 256,
