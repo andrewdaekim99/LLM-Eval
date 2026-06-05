@@ -225,16 +225,24 @@ output makes the regression obvious. Threshold config is repo-checked and review
 - [x] Commit phase as `feat: ci eval-gate with pass@k`.
 
 ### Your tasks
-- [ ] Add `ANTHROPIC_API_KEY` to GitHub repo secrets (Settings → Secrets and variables →
+- [x] Add `ANTHROPIC_API_KEY` to GitHub repo secrets (Settings → Secrets and variables →
       Actions). I cannot do this for you.
-- [ ] Decide which suites the CI gate should run on every PR (probably extraction +
+      *(Done with a separate "yardstick-ci" key.)*
+- [x] Decide which suites the CI gate should run on every PR (probably extraction +
       classification; generation is slower/more expensive). Tell me and I'll wire it.
-- [ ] Pick the initial thresholds. I'll suggest sane defaults from the first real run, but
+      *(Confirmed: extraction + classification; wired in `yardstick.config.json`.)*
+- [x] Pick the initial thresholds. I'll suggest sane defaults from the first real run, but
       the final numbers are a judgment call you should own.
-- [ ] Cut a deliberate "regression PR" with a clearly-worse prompt; confirm CI fails red and
+      *(Accepted defaults: extraction passRate 0.75 / maxCostUSD 0.05; classification
+      passRate 0.8 / maxCostUSD 0.01. Both passed live on the first real CI run.)*
+- [x] Cut a deliberate "regression PR" with a clearly-worse prompt; confirm CI fails red and
       the message is obvious. Screenshot the failing check for the README.
+      *(PR open at demo/regression-binary-sentiment branch; gate tripped red at 7/10
+      classification pass rate exactly as predicted. Screenshot still TODO — Phase 5
+      README task will reference it.)*
 - [ ] (Optional) Configure branch protection requiring the eval-gate check to pass before
       merge.
+      *(In progress: ruleset instructions provided.)*
 
 ---
 
