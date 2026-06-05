@@ -19,7 +19,9 @@ export function RunSummaryCard({ run }: Props) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div>
-          <CardTitle className="font-mono text-lg">{formatRunId(run.runId)}</CardTitle>
+          <CardTitle className="font-mono text-xl text-primary">
+            {formatRunId(run.runId)}
+          </CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             {run.suite}
             <span className="mx-2 text-border">·</span>
@@ -35,14 +37,11 @@ export function RunSummaryCard({ run }: Props) {
         </Badge>
       </CardHeader>
       <CardContent>
-        <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat label="Cases" value={`${run.passedCases}/${run.totalCases}`} />
           <Stat label="Total cost" value={formatCostUSD(run.totalCostUSD)} />
           <Stat label="p95 latency" value={formatLatencyMs(run.latencyMsP95)} />
-          <Stat
-            label="Cache hits"
-            value={formatPercent(run.cacheHitRate, 0)}
-          />
+          <Stat label="Cache hits" value={formatPercent(run.cacheHitRate, 0)} />
         </dl>
       </CardContent>
     </Card>
@@ -52,10 +51,10 @@ export function RunSummaryCard({ run }: Props) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-1 font-mono text-base">{value}</dd>
+      <dd className="mt-1 font-mono text-lg text-foreground">{value}</dd>
     </div>
   );
 }

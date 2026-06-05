@@ -30,7 +30,7 @@ export default async function SuitePage({ params, searchParams }: PageProps) {
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Suite: <span className="font-mono">{decodedSuite}</span>
+          Suite <span className="font-mono text-primary">{decodedSuite}</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {points.length === 0

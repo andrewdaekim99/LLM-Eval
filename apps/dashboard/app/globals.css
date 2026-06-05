@@ -2,29 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Modern gaming-dashboard theme.
+ *
+ * Deep navy background with cool-white text and a gold/yellow accent.
+ * Inspired by competitive-gaming admin panels (see ui-inspo.png in the
+ * repo root). Pass = fresh green, fail = warm amber, primary CTA = gold.
+ *
+ * Dark only — the inspiration is dark, and tournament/leaderboard tables
+ * read better against a navy canvas.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --success: 142 71% 33%;
-    --success-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    /* Base canvas ────────────────────────────────────────────────── */
+    --background: 220 39% 8%;          /* #0B1220 — deep navy */
+    --foreground: 213 27% 92%;         /* near-white with cool tint */
+
+    --card: 219 31% 13%;               /* #161F2E — one step lighter for layering */
+    --card-foreground: 213 27% 92%;
+
+    --popover: 219 35% 15%;
+    --popover-foreground: 213 27% 92%;
+
+    /* Accent / CTA — warm gold from the inspiration */
+    --primary: 43 96% 56%;             /* #FBBF24 */
+    --primary-foreground: 220 39% 8%;
+
+    --secondary: 219 27% 18%;
+    --secondary-foreground: 213 27% 92%;
+
+    --muted: 219 27% 16%;
+    --muted-foreground: 217 18% 62%;   /* #8B96A8 */
+
+    --accent: 219 27% 20%;
+    --accent-foreground: 213 27% 92%;
+
+    /* Pass = fresh green, fail = warm amber (kept from prior decision). */
+    --success: 142 71% 45%;            /* #22C55E */
+    --success-foreground: 220 39% 8%;
+    --destructive: 38 92% 55%;         /* #F59E0B */
+    --destructive-foreground: 220 39% 8%;
+
+    --border: 219 27% 20%;
+    --input: 219 27% 20%;
+    --ring: 43 96% 56%;
+
     --radius: 0.5rem;
   }
 }
@@ -33,7 +55,18 @@
   * {
     @apply border-border;
   }
+  html {
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
   body {
     @apply bg-background text-foreground antialiased;
+  }
+  /* Code-ish content (run IDs, JSON, file paths) keeps the monospace. */
+  .font-mono,
+  code,
+  pre {
+    font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo,
+      "JetBrains Mono", Consolas, monospace;
   }
 }

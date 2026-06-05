@@ -30,14 +30,14 @@ function DeltaCard({ label, value, format, inverse }: Delta) {
   return (
     <Card>
       <CardContent className="py-5">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {label}
         </div>
         <div
           className={cn(
-            "mt-2 font-mono text-2xl",
-            direction === "good" && "text-green-700",
-            direction === "bad" && "text-red-700",
+            "mt-2 font-mono text-2xl font-semibold",
+            direction === "good" && "text-success",
+            direction === "bad" && "text-destructive",
             direction === "flat" && "text-foreground",
           )}
         >
