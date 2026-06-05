@@ -459,3 +459,52 @@ from retryable network errors.
 ### Consequences
 - One layer of trust: outside zod = unknown, inside = typed.
 - Errors at startup are clear and pointable instead of weird mid-run failures.
+
+---
+
+## ADR-0017 — Dashboard reads the DB via server components, not HTTP API routes
+
+**Date:** 2026-06-05
+**Status:** Accepted
+
+### Context
+The Phase 4 dashboard needs to render run lists, run details, suite trends, diffs, and
+failure drill-downs from the SQLite history + JSON artifacts already produced by the
+CLI. The Next.js App Router gives two reasonable shapes for the data path:
+
+1. **Server components** that call `@yardstick/core` (`HistoryDb`, `readArtifact`,
+   `diffCases`) directly, with filters expressed as URL search params.
+2. **`/api/*` route handlers** that wrap those same calls in JSON endpoints, plus
+   client components that `fetch()` them.
+
+The dashboard is read-only — there is no user-write path, no auth, no realtime —
+and runs against local files, never as a public service.
+
+### Decision
+**Server components everywhere.** `apps/dashboard/lib/{db,data}.ts` are marked
+`import "server-only"` and called directly from `app/**/page.tsx`. No `/api/*` routes
+exist. URL search params (`?suite=`, `?from=`, `?to=`, `?a=&b=`) drive every view.
+
+### Alternatives considered
+- **API routes + client components** — adds an HTTP hop, doubles the schema surface
+  (server type → JSON wire → client type), and is the wrong shape for a tool whose
+  primary user input is "pick this run" / "compare these two." Real win only when
+  there's polling, mutations, or external consumers; the dashboard has none.
+- **tRPC** — same shape as the previous option but with better types. Still solving
+  a problem this app doesn't have, plus a non-trivial dep.
+
+### Consequences
+- `better-sqlite3` (a native module) lives behind `server-only` and never enters the
+  client bundle. `next.config.mjs` externalizes it + `bindings` so webpack doesn't
+  try to bundle the dynamic-`require` native loader.
+- `ANTHROPIC_API_KEY` cannot accidentally leak — there is no client code that imports
+  from `lib/data.ts` or `@yardstick/core`. CLAUDE.md golden rule 7 holds by
+  construction; the only place a `NEXT_PUBLIC_*` reference appears is the comment in
+  `next.config.mjs` forbidding it.
+- Filters are bookmarkable / shareable (`/runs?suite=generation&from=…`) without any
+  per-component state machinery.
+- The `globalThis` cache in `lib/db.ts` keeps one `HistoryDb` handle alive across
+  Next dev-mode HMR reloads — otherwise every code edit would leak a SQLite handle.
+- If we ever ship a true API consumer (CI hook, Slack bot, another frontend), this
+  decision is worth revisiting: add `/api/*` route handlers that import the same
+  `lib/data.ts` functions and return JSON. The data layer itself is reusable.
