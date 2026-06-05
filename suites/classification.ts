@@ -6,17 +6,15 @@ import { exactMatch, type Case, type Suite } from "@yardstick/core";
 
 type Sentiment = "positive" | "negative" | "neutral";
 
-const SYSTEM_PROMPT = `Classify the sentiment of the user's message as one of three labels.
+const SYSTEM_PROMPT = `Classify the sentiment of the user's message as either positive or negative.
 
 Respond with ONLY the single label, lowercase, no punctuation, no quotes, no explanation.
 Allowed labels:
 positive
 negative
-neutral
 
-If the message expresses overall approval, satisfaction, or praise: positive.
+If the message expresses approval, satisfaction, praise, or is purely factual: positive.
 If it expresses dissatisfaction, frustration, or criticism: negative.
-If it is purely factual, descriptive, or genuinely mixed without leaning: neutral.
 
 Detect sarcasm: surface-level praise that is clearly meant as criticism is negative.`;
 
