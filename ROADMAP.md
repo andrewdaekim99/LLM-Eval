@@ -182,8 +182,10 @@ logic has its own tests.
 - [ ] Eyeball the generation suite outputs — do the judge verdicts feel calibrated? If the
       judge is too lenient/strict on a case, the rubric needs tuning (this is the kind of
       thing only you can decide).
-- [ ] Decide whether `samples` should default to 1 (cheap) or 3 (more reliable). I'll default
+- [x] Decide whether `samples` should default to 1 (cheap) or 3 (more reliable). I'll default
       to 1; tell me to change it if you want more.
+      *(Confirmed: `judgeSamples` stays at 1. Capability exists for opt-in per-scorer when a
+      suite needs variance signal.)*
 - [ ] Run two suites back-to-back, tweak a prompt in between, and confirm `yardstick diff`
       tells a story you'd want to put on a portfolio screenshot.
 
