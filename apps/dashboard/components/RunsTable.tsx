@@ -25,43 +25,43 @@ interface Props {
 export function RunsTable({ runs }: Props) {
   if (runs.length === 0) {
     return (
-      <div className="rounded-sm border border-dashed border-border p-10 text-center font-mono text-sm text-muted-foreground">
-        // no runs match the current filters
+      <div className="rounded-lg border border-dashed border-border bg-card/40 p-10 text-center text-sm text-muted-foreground">
+        No runs match the current filters.
       </div>
     );
   }
 
   return (
-    <div className="phosphor-border rounded-sm bg-card/40">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-border/70 hover:bg-transparent">
-            <TableHead className="text-[11px] uppercase tracking-widest text-primary">
-              run
+          <TableRow className="border-b border-border bg-muted/40 hover:bg-muted/40">
+            <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Run
             </TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest text-primary">
-              suite
+            <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Suite
             </TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest text-primary">
-              prompt
+            <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Prompt
             </TableHead>
-            <TableHead className="text-[11px] uppercase tracking-widest text-primary">
-              started
+            <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Started
             </TableHead>
-            <TableHead className="text-right text-[11px] uppercase tracking-widest text-primary">
-              pass
+            <TableHead className="text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Pass
             </TableHead>
-            <TableHead className="text-right text-[11px] uppercase tracking-widest text-primary">
-              cases
+            <TableHead className="text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Cases
             </TableHead>
-            <TableHead className="text-right text-[11px] uppercase tracking-widest text-primary">
-              cost
+            <TableHead className="text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Cost
             </TableHead>
-            <TableHead className="text-right text-[11px] uppercase tracking-widest text-primary">
+            <TableHead className="text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
               p95
             </TableHead>
-            <TableHead className="text-right text-[11px] uppercase tracking-widest text-primary">
-              cache
+            <TableHead className="text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Cache
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -71,15 +71,12 @@ export function RunsTable({ runs }: Props) {
             return (
               <TableRow
                 key={r.runId}
-                className="border-b border-border/40 font-mono"
+                className="border-b border-border/60 last:border-b-0"
               >
                 <TableCell>
                   <Link
                     href={`/runs/${r.runId}`}
-                    className="text-primary underline-offset-4 hover:underline"
-                    style={{
-                      textShadow: "0 0 6px hsl(var(--primary) / 0.5)",
-                    }}
+                    className="font-mono text-sm text-primary underline-offset-4 hover:underline"
                   >
                     {formatRunId(r.runId)}
                   </Link>
@@ -87,7 +84,7 @@ export function RunsTable({ runs }: Props) {
                 <TableCell>
                   <Link
                     href={`/suites/${encodeURIComponent(r.suite)}`}
-                    className="text-sm text-foreground/80 hover:text-primary hover:underline"
+                    className="text-sm text-foreground hover:text-primary hover:underline"
                   >
                     {r.suite}
                   </Link>
@@ -95,7 +92,7 @@ export function RunsTable({ runs }: Props) {
                 <TableCell className="text-sm text-muted-foreground">
                   {r.promptVersion}
                 </TableCell>
-                <TableCell className="text-sm">
+                <TableCell className="text-sm text-muted-foreground">
                   {formatTimestamp(r.startedAt)}
                 </TableCell>
                 <TableCell className="text-right">
@@ -103,16 +100,16 @@ export function RunsTable({ runs }: Props) {
                     {formatPercent(r.passRate)}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right text-sm">
+                <TableCell className="text-right font-mono text-sm">
                   {r.passedCases}/{r.totalCases}
                 </TableCell>
-                <TableCell className="text-right text-sm">
+                <TableCell className="text-right font-mono text-sm">
                   {formatCostUSD(r.totalCostUSD)}
                 </TableCell>
-                <TableCell className="text-right text-sm">
+                <TableCell className="text-right font-mono text-sm">
                   {formatLatencyMs(r.latencyMsP95)}
                 </TableCell>
-                <TableCell className="text-right text-sm text-muted-foreground">
+                <TableCell className="text-right font-mono text-sm text-muted-foreground">
                   {formatPercent(r.cacheHitRate, 0)}
                 </TableCell>
               </TableRow>

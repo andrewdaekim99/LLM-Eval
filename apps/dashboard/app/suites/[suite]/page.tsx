@@ -29,16 +29,13 @@ export default async function SuitePage({ params, searchParams }: PageProps) {
       </div>
 
       <div>
-        <h1 className="cli-prompt font-display text-3xl">
-          suite{" "}
-          <span className="text-primary">
-            {decodedSuite}
-          </span>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Suite <span className="font-mono text-primary">{decodedSuite}</span>
         </h1>
-        <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {points.length === 0
-            ? "// no runs yet for this suite"
-            : `// ${points.length} run${points.length === 1 ? "" : "s"} over time`}
+            ? "No runs yet for this suite."
+            : `${points.length} run${points.length === 1 ? "" : "s"} over time.`}
         </p>
       </div>
 

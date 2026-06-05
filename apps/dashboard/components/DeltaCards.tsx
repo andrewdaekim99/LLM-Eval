@@ -27,26 +27,19 @@ export function DeltaCards({ passRate, cost, latency }: Props) {
 
 function DeltaCard({ label, value, format, inverse }: Delta) {
   const direction = directionOf(value, inverse);
-  const glow =
-    direction === "good"
-      ? "hsl(var(--success) / 0.55)"
-      : direction === "bad"
-        ? "hsl(var(--destructive) / 0.55)"
-        : "hsl(var(--muted-foreground) / 0.3)";
   return (
-    <Card className="phosphor-border bg-card/40">
+    <Card>
       <CardContent className="py-5">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {label}
         </div>
         <div
           className={cn(
-            "mt-2 font-display text-3xl",
+            "mt-2 font-mono text-2xl font-semibold",
             direction === "good" && "text-success",
             direction === "bad" && "text-destructive",
             direction === "flat" && "text-foreground",
           )}
-          style={{ textShadow: `0 0 8px ${glow}` }}
         >
           {value > 0 ? "+" : value < 0 ? "−" : "±"}
           {format(Math.abs(value))}

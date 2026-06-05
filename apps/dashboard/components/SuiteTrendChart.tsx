@@ -52,23 +52,23 @@ export function SuiteTrendChart({ points }: Props) {
 
   const charts: ChartConfig[] = [
     {
-      title: "pass rate",
+      title: "Pass rate",
       dataKey: "passRatePct",
       format: (v) => `${v.toFixed(0)}%`,
-      stroke: "hsl(130 100% 60%)", // phosphor green
+      stroke: "hsl(142 71% 50%)", // success green
       domain: [0, 100],
     },
     {
-      title: "total cost (usd)",
+      title: "Total cost (USD)",
       dataKey: "costUSD",
       format: (v) => (v < 0.01 ? `$${v.toFixed(4)}` : `$${v.toFixed(3)}`),
-      stroke: "hsl(38 100% 60%)", // amber
+      stroke: "hsl(43 96% 60%)", // gold accent
     },
     {
       title: "p95 latency (ms)",
       dataKey: "latencyP95",
       format: (v) => `${Math.round(v)} ms`,
-      stroke: "hsl(180 90% 60%)", // cyan accent
+      stroke: "hsl(199 89% 60%)", // cool blue
     },
   ];
 
@@ -77,13 +77,10 @@ export function SuiteTrendChart({ points }: Props) {
       {charts.map((c) => (
         <div
           key={c.dataKey}
-          className="phosphor-border rounded-sm bg-card/40 p-4"
+          className="rounded-lg border border-border bg-card p-4"
         >
-          <div
-            className="mb-2 font-mono text-[11px] uppercase tracking-widest text-primary"
-            style={{ textShadow: "0 0 6px hsl(var(--primary) / 0.4)" }}
-          >
-            // {c.title}
+          <div className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {c.title}
           </div>
           <div style={{ width: "100%", height: CHART_HEIGHT }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -99,18 +96,18 @@ export function SuiteTrendChart({ points }: Props) {
                 }}
               >
                 <CartesianGrid
-                  strokeDasharray="2 4"
-                  stroke="hsl(140 30% 18%)"
+                  strokeDasharray="3 3"
+                  stroke="hsl(219 27% 20%)"
                 />
                 <XAxis
                   dataKey="label"
-                  stroke="hsl(130 35% 55%)"
-                  fontSize={10}
+                  stroke="hsl(217 18% 62%)"
+                  fontSize={11}
                   tickMargin={6}
                 />
                 <YAxis
-                  stroke="hsl(130 35% 55%)"
-                  fontSize={10}
+                  stroke="hsl(217 18% 62%)"
+                  fontSize={11}
                   tickFormatter={c.format}
                   domain={c.domain ?? ["auto", "auto"]}
                   width={56}
@@ -132,7 +129,6 @@ export function SuiteTrendChart({ points }: Props) {
                   strokeWidth={2}
                   dot={{ r: 3, fill: c.stroke, stroke: c.stroke }}
                   activeDot={{ r: 5, fill: c.stroke, stroke: c.stroke }}
-                  filter={`drop-shadow(0 0 4px ${c.stroke})`}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -160,15 +156,10 @@ function TrendTooltip({
   const point = raw as TrendPoint & { passRatePct: number };
   const value = point[dataKey];
   return (
-    <div className="phosphor-border rounded-sm bg-popover px-3 py-2 font-mono text-xs">
-      <div className="text-primary">{point.runId.slice(0, 8)}</div>
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-lg">
+      <div className="font-mono text-primary">{point.runId.slice(0, 8)}</div>
       <div className="text-muted-foreground">{formatLabel(point.startedAt)}</div>
-      <div
-        className="mt-1 text-foreground"
-        style={{ textShadow: "0 0 6px hsl(var(--primary) / 0.4)" }}
-      >
-        {format(value)}
-      </div>
+      <div className="mt-1 font-mono text-foreground">{format(value)}</div>
     </div>
   );
 }
