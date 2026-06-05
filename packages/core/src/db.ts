@@ -104,6 +104,41 @@ export interface RunListEntry {
 export interface ListRunsOptions {
   readonly suite?: string;
   readonly limit?: number;
+  /** Inclusive lower bound on `started_at` (ISO string). */
+  readonly from?: string;
+  /** Inclusive upper bound on `started_at` (ISO string). */
+  readonly to?: string;
+}
+
+export interface CaseHistoryEntry {
+  readonly runId: string;
+  readonly startedAt: string;
+  readonly passed: boolean;
+  readonly promptVersion: string;
+  readonly model: string;
+}
+
+export interface StoredSample {
+  readonly sampleIndex: number;
+  readonly output: string;
+  readonly scores: readonly StoredScore[];
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly costUSD: number;
+  readonly latencyMs: number;
+  readonly cacheHit: boolean;
+  readonly stopReason: string | null;
+}
+
+export interface StoredJudgeVerdict {
+  readonly sampleIndex: number;
+  readonly scorer: string;
+  readonly verdict: string;
+  readonly score: number;
+  readonly reason: string;
+  readonly rubric: string;
+  readonly judgeModel: string;
+  readonly samples: readonly { score: number; verdict: string; reason: string }[];
 }
 
 export class HistoryDb {
@@ -207,10 +242,62 @@ export class HistoryDb {
 
   listRuns(opts: ListRunsOptions = {}): RunListEntry[] {
     const limit = opts.limit ?? 50;
+    // `from`/`to` use sentinel bounds when omitted so the same prepared statement
+    // works whether or not the caller filters by date — keeps the hot path branch-free.
+    const from = opts.from ?? "0000-00-00T00:00:00.000Z";
+    const to = opts.to ?? "9999-12-31T23:59:59.999Z";
     const rows = opts.suite
-      ? this.stmts.listBySuite.all({ suite: opts.suite, lim: limit })
-      : this.stmts.listAll.all({ lim: limit });
+      ? this.stmts.listBySuite.all({ suite: opts.suite, from, to, lim: limit })
+      : this.stmts.listAll.all({ from, to, lim: limit });
     return (rows as RunRow[]).map(rowToListEntry);
+  }
+
+  /** Distinct suite names across all runs, alphabetical. Used by the dashboard filter. */
+  listSuites(): string[] {
+    const rows = this.stmts.listSuites.all() as { suite: string }[];
+    return rows.map((r) => r.suite);
+  }
+
+  /** All samples for one (run, case), ordered by sample_index. */
+  getSamples(runId: string, caseId: string): StoredSample[] {
+    const rows = this.stmts.getSamples.all({
+      run_id: runId,
+      case_id: caseId,
+    }) as StoredSampleRow[];
+    return rows.map(rowToStoredSample);
+  }
+
+  /** All llmJudge verdicts for one (run, case), ordered by (sample_index, scorer). */
+  getJudgeVerdicts(runId: string, caseId: string): StoredJudgeVerdict[] {
+    const rows = this.stmts.getJudgeVerdicts.all({
+      run_id: runId,
+      case_id: caseId,
+    }) as StoredJudgeVerdictRow[];
+    return rows.map(rowToStoredJudgeVerdict);
+  }
+
+  /**
+   * History for a single case across runs of a suite, newest-first. When
+   * `beforeStartedAt` is given the result is restricted to runs strictly before
+   * that timestamp — used by the drill-down's "prior passing run" lookup.
+   */
+  getCaseHistory(
+    suite: string,
+    caseId: string,
+    beforeStartedAt?: string,
+  ): CaseHistoryEntry[] {
+    const rows = this.stmts.getCaseHistory.all({
+      suite,
+      case_id: caseId,
+      before: beforeStartedAt ?? "9999-12-31T23:59:59.999Z",
+    }) as CaseHistoryRow[];
+    return rows.map((r) => ({
+      runId: r.run_id,
+      startedAt: r.started_at,
+      passed: r.passed === 1,
+      promptVersion: r.prompt_version,
+      model: r.model,
+    }));
   }
 
   getRunSummary(runId: string): RunListEntry | null {
@@ -272,6 +359,37 @@ interface StoredCaseRow {
   aggregate_scores_json: string;
 }
 
+interface StoredSampleRow {
+  sample_index: number;
+  output: string;
+  scores_json: string;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  latency_ms: number;
+  cache_hit: number;
+  stop_reason: string | null;
+}
+
+interface StoredJudgeVerdictRow {
+  sample_index: number;
+  scorer: string;
+  verdict: string;
+  score: number;
+  reason: string;
+  rubric: string;
+  judge_model: string;
+  judge_samples_json: string;
+}
+
+interface CaseHistoryRow {
+  run_id: string;
+  started_at: string;
+  passed: number;
+  prompt_version: string;
+  model: string;
+}
+
 export interface StoredCase {
   readonly caseId: string;
   readonly input: unknown;
@@ -312,6 +430,38 @@ function rowToStoredCase(r: StoredCaseRow): StoredCase {
     expectation: safeParseJson(r.expectation_json),
     passed: r.passed === 1,
     aggregateScores: safeParseJson(r.aggregate_scores_json) as StoredScore[],
+  };
+}
+
+function rowToStoredSample(r: StoredSampleRow): StoredSample {
+  return {
+    sampleIndex: r.sample_index,
+    output: r.output,
+    scores: (safeParseJson(r.scores_json) as StoredScore[]) ?? [],
+    inputTokens: r.input_tokens,
+    outputTokens: r.output_tokens,
+    costUSD: r.cost_usd,
+    latencyMs: r.latency_ms,
+    cacheHit: r.cache_hit === 1,
+    stopReason: r.stop_reason,
+  };
+}
+
+function rowToStoredJudgeVerdict(r: StoredJudgeVerdictRow): StoredJudgeVerdict {
+  return {
+    sampleIndex: r.sample_index,
+    scorer: r.scorer,
+    verdict: r.verdict,
+    score: r.score,
+    reason: r.reason,
+    rubric: r.rubric,
+    judgeModel: r.judge_model,
+    samples:
+      (safeParseJson(r.judge_samples_json) as {
+        score: number;
+        verdict: string;
+        reason: string;
+      }[]) ?? [],
   };
 }
 
@@ -389,6 +539,7 @@ function prepareStatements(db: DBInstance): PreparedStatements {
              total_cases, passed_cases, pass_rate, total_cost_usd,
              latency_ms_p95, cache_hit_rate, artifact_path
       FROM runs
+      WHERE started_at BETWEEN @from AND @to
       ORDER BY started_at DESC
       LIMIT @lim
     `),
@@ -398,8 +549,33 @@ function prepareStatements(db: DBInstance): PreparedStatements {
              latency_ms_p95, cache_hit_rate, artifact_path
       FROM runs
       WHERE suite = @suite
+        AND started_at BETWEEN @from AND @to
       ORDER BY started_at DESC
       LIMIT @lim
+    `),
+    listSuites: db.prepare("SELECT DISTINCT suite FROM runs ORDER BY suite"),
+    getSamples: db.prepare(`
+      SELECT sample_index, output, scores_json,
+             input_tokens, output_tokens, cost_usd, latency_ms, cache_hit, stop_reason
+      FROM samples
+      WHERE run_id = @run_id AND case_id = @case_id
+      ORDER BY sample_index
+    `),
+    getJudgeVerdicts: db.prepare(`
+      SELECT sample_index, scorer, verdict, score, reason,
+             rubric, judge_model, judge_samples_json
+      FROM judge_verdicts
+      WHERE run_id = @run_id AND case_id = @case_id
+      ORDER BY sample_index, scorer
+    `),
+    getCaseHistory: db.prepare(`
+      SELECT r.run_id, r.started_at, c.passed, r.prompt_version, r.model
+      FROM cases c
+      JOIN runs  r ON r.run_id = c.run_id
+      WHERE r.suite = @suite
+        AND c.case_id = @case_id
+        AND r.started_at < @before
+      ORDER BY r.started_at DESC
     `),
     getRun: db.prepare(`
       SELECT run_id, suite, prompt_version, model, started_at,
@@ -424,8 +600,12 @@ interface PreparedStatements {
   insertJudge: Statement;
   listAll: Statement;
   listBySuite: Statement;
+  listSuites: Statement;
   getRun: Statement;
   countRuns: Statement;
   getCases: Statement;
+  getSamples: Statement;
+  getJudgeVerdicts: Statement;
+  getCaseHistory: Statement;
   findByPrefix: Statement;
 }

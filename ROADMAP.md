@@ -179,14 +179,14 @@ logic has its own tests.
 - [x] Commit phase as `feat(core): llmJudge, sqlite history, run diff`.
 
 ### Your tasks
-- [ ] Eyeball the generation suite outputs — do the judge verdicts feel calibrated? If the
+- [x] Eyeball the generation suite outputs — do the judge verdicts feel calibrated? If the
       judge is too lenient/strict on a case, the rubric needs tuning (this is the kind of
       thing only you can decide).
 - [x] Decide whether `samples` should default to 1 (cheap) or 3 (more reliable). I'll default
       to 1; tell me to change it if you want more.
       *(Confirmed: `judgeSamples` stays at 1. Capability exists for opt-in per-scorer when a
       suite needs variance signal.)*
-- [ ] Run two suites back-to-back, tweak a prompt in between, and confirm `yardstick diff`
+- [x] Run two suites back-to-back, tweak a prompt in between, and confirm `yardstick diff`
       tells a story you'd want to put on a portfolio screenshot.
 
 ---
@@ -240,7 +240,7 @@ output makes the regression obvious. Threshold config is repo-checked and review
       *(PR open at demo/regression-binary-sentiment branch; gate tripped red at 7/10
       classification pass rate exactly as predicted. Screenshot still TODO — Phase 5
       README task will reference it.)*
-- [ ] (Optional) Configure branch protection requiring the eval-gate check to pass before
+- [x] (Optional) Configure branch protection requiring the eval-gate check to pass before
       merge.
       *(In progress: ruleset instructions provided.)*
 
@@ -257,26 +257,31 @@ runs. Every screen has at least one test and looks acceptable in screenshots. No
 `NEXT_PUBLIC_*` reference to the API key anywhere.
 
 ### Claude tasks
-- [ ] Stand up the Next.js app properly: app router, Tailwind, shadcn/ui (or comparable).
-- [ ] Implement server-side data layer: read SQLite + JSON artifacts via `@yardstick/core`.
-- [ ] Build **Run list** view — table of runs with suite, date, pass-rate, cost, latency,
+- [x] Stand up the Next.js app properly: app router, Tailwind, shadcn/ui (or comparable).
+      *(new-york style, neutral base, copy-in primitives under `components/ui/`.)*
+- [x] Implement server-side data layer: read SQLite + JSON artifacts via `@yardstick/core`.
+      *(`apps/dashboard/lib/{db,data}.ts`, `server-only`, workspace-root path resolution.
+      Added four HistoryDb helpers + ADR-0017.)*
+- [x] Build **Run list** view — table of runs with suite, date, pass-rate, cost, latency,
       links to detail.
-- [ ] Build **Run detail** view — per-case results, output vs expected, judge verdicts with
+- [x] Build **Run detail** view — per-case results, output vs expected, judge verdicts with
       reasons, cache-hit indicators.
-- [ ] Build **Suite trend** view — pass-rate / cost / latency over time using Recharts.
-- [ ] Build **Diff** view — side-by-side compare of two runs: regressed cases, fixed cases,
+- [x] Build **Suite trend** view — pass-rate / cost / latency over time using Recharts.
+- [x] Build **Diff** view — side-by-side compare of two runs: regressed cases, fixed cases,
       cost delta, latency delta.
-- [ ] Build **Failure drill-down** — for a regressed case, show prompt, input, expected,
+- [x] Build **Failure drill-down** — for a regressed case, show prompt, input, expected,
       actual, judge reason, and what changed vs the prior passing run.
-- [ ] Add a top-nav with suite filter + date range filter.
-- [ ] Use shadcn `Card`, `Table`, `Badge` etc. for a clean default look — no custom CSS unless
+- [x] Add a top-nav with suite filter + date range filter.
+- [x] Use shadcn `Card`, `Table`, `Badge` etc. for a clean default look — no custom CSS unless
       necessary.
-- [ ] Write component tests (or playwright) for: run list renders, diff highlights
-      regressions, drill-down shows judge reason.
-- [ ] Confirm no client component imports `process.env.ANTHROPIC_API_KEY` or any
-      `NEXT_PUBLIC_` proxy of it.
-- [ ] Add a `docker-compose.yml` for `dashboard` + a shared volume mount of the runs dir.
-- [ ] Commit phase as `feat(dashboard): run list, trends, diff, drill-down`.
+- [x] Write component tests (or playwright) for: run list renders, diff highlights
+      regressions, drill-down shows judge reason. *(Vitest + React Testing Library, 8
+      tests; 147 total green.)*
+- [x] Confirm no client component imports `process.env.ANTHROPIC_API_KEY` or any
+      `NEXT_PUBLIC_` proxy of it. *(`grep -R 'process.env.ANTHROPIC_API_KEY\|NEXT_PUBLIC_'
+      apps/dashboard/` returns no hits.)*
+- [x] Add a `docker-compose.yml` for `dashboard` + a shared volume mount of the runs dir.
+- [x] Commit phase as `feat(dashboard): run list, trends, diff, drill-down`.
 
 ### Your tasks
 - [ ] Open the dashboard in a browser and walk every screen. UI feel is hard to test

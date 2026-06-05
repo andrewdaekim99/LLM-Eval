@@ -40,6 +40,9 @@ export {
   type ListRunsOptions,
   type StoredCase,
   type StoredScore,
+  type StoredSample,
+  type StoredJudgeVerdict,
+  type CaseHistoryEntry,
 } from "./db.js";
 export { diffCases, meanScoreValue, type CaseDiff, type CaseDiffKind } from "./diff.js";
 export { applyGate, type GateResult, type GateAxis, type GateFailureReason } from "./gate.js";
